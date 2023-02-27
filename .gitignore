@@ -7,11 +7,12 @@
 node_modules/
 dist/
 
-# Compiled Java class files
-*.class
 
 # Compiled Python bytecode
 *.py[cod]
+
+# test coverage database
+.coverage
 
 # Log files
 *.log
@@ -19,8 +20,7 @@ dist/
 # Package files
 *.jar
 
-# Maven
-target/
+# Builds
 dist/
 
 # JetBrains IDE
@@ -47,4 +47,3 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
-
