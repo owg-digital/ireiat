@@ -3,6 +3,18 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+# Getting started
+
+This repo is meant to represent a "canonical" Python project, where some of the infrastructure
+details associated with styling, linting, testing, and test coverage are
+handled so you don't have to think about them. We've taken an opinionated (and incomplete!) view of what
+"canonical" means - comments and pull requests welcome.
+
+This repo is meant to be a *starting point* for your own repo and is
+meant to be forked to save setup time. If you want to use this repo
+from BitBucket, click the "Fork" button from the top of the repo and then
+modify your forked version.
+
 ## Package management
 
 We use [Pipenv](https://packaging.python.org/en/latest/tutorials/managing-dependencies/), currently the recommended
