@@ -7,9 +7,13 @@
 node_modules/
 dist/
 
+# logs
+logs/*
+!logs/.gitkeep
 
 # Compiled Python bytecode
 *.py[cod]
+
 
 # test coverage database
 .coverage
