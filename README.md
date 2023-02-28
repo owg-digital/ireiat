@@ -23,7 +23,7 @@ for details on installing / removing packages.
 
 To install runtime dependencies run `pipenv install`.
 
-To install dev dependencies run `pipen install --dev`.
+To install dev dependencies run `pipenv install --dev`.
 
 Note that we do NOT use a `pyproject.toml` file because we have not assumed that
 the current library will be packaged (and distributed on, say, PyPi). If this
