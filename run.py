@@ -1,6 +1,6 @@
 import logging
 
-from src.util.log import configure_logging
+from src.util.logging_ import configure_logging
 
 configure_logging(output_file=True)
 

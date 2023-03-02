@@ -9,6 +9,9 @@ name = "pypi"
 pre-commit = "*"
 pytest = "*"
 coverage = "*"
+black = "*"
+ruff = "*"
+mypy = "*"
 
 [requires]
 python_version = "3.9"
