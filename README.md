@@ -29,10 +29,6 @@ meant to be forked to save setup time. If you want to use this repo
 from BitBucket, click the "Fork" button from the top of the repo and then
 modify your forked version.
 
-Dependencies:
-
-- pipenv
-
 ## Package management
 
 We use [Pipenv](https://packaging.python.org/en/latest/tutorials/managing-dependencies/), currently the recommended
@@ -83,3 +79,7 @@ by first running:
 
 Then run `pipenv run coverage report`. There are HTML versions
 if needed but these should not be committed to the repo.
+
+# Todo
+
+- CI example(s)
