@@ -3,7 +3,21 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-# Getting started
+# Quick Start
+
+## Dependencies
+
+- pipenv
+
+## Steps
+
+- Fork this repo
+- Install runtime libs: `pipenv install`
+- Install dev libs: `pipenv install --dev`
+- Install pre-commit hooks: `pipenv run pre-commit install`
+- Build / commit your `src` and `tests`
+
+# Some Context
 
 This repo is meant to represent a "canonical" Python project, where some of the infrastructure
 details associated with styling, linting, testing, and test coverage are
@@ -14,6 +28,10 @@ This repo is meant to be a *starting point* for your own repo and is
 meant to be forked to save setup time. If you want to use this repo
 from BitBucket, click the "Fork" button from the top of the repo and then
 modify your forked version.
+
+Dependencies:
+
+- pipenv
 
 ## Package management
 
@@ -37,19 +55,13 @@ and code linting hooks. Once `pipenv` is set up (see above), install
 pre-commit hooks by running: `pipenv run pre-commit install`, which
 should set up style and linting rules.
 
-### Style
+The following are implemented:
 
-We use [black](https://github.com/psf/black) on pre-commit. "Any color you like."
-
-### Linting
-
-We use [Ruff](https://github.com/charliermarsh/ruff) on pre-commit, the Rust-based linter that's much
+- Style: [black](https://github.com/psf/black). "Any color you like."
+- Linting: [Ruff](https://github.com/charliermarsh/ruff), the Rust-based linter that's much
 faster than `pylint` or `flake8` with comparable coverage.
-
-### Static analysis
-
-At the moment, not using anything but looking into Microsoft's [Pyright](https://github.com/microsoft/pyright)
-and [MyPy](https://mypy-lang.org/).
+- Type Checking: [MyPy](https://mypy-lang.org/).
+- Static analysis: At the moment, not using anything but looking into Microsoft's [Pyright](https://github.com/microsoft/pyright).
 
 ## Tests
 
