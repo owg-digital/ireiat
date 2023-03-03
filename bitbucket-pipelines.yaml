@@ -1,3 +1,5 @@
+# Code housekeeping (linting, typing, etc.) is performed pre-commit; could add it here, too.
+
 image: python:3.9
 
 pipelines:
