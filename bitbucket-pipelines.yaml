@@ -1,0 +1,13 @@
+image: python:3.9
+
+pipelines:
+  default:
+    - step:
+        name: Build and test
+        caches:
+          - pip
+        script:
+          - apt-get update && apt-get install -y git
+          - pip install pipenv
+          - pipenv install --dev
+          - pipenv run python -m unittest discover
