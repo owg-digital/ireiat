@@ -5,6 +5,14 @@ image: python:3.9
 pipelines:
   default:
     - step:
+        name: Scan with Salus
+        caches:
+          - docker
+        services:
+          - docker
+        script:
+          - docker run --rm -t -v $(pwd):/home/repo coinbase/salus
+    - step:
         name: Build and test
         caches:
           - pip

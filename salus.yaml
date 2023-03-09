@@ -1,0 +1,21 @@
+# Configuration file for Salus security scanner: https://github.com/coinbase/salus/blob/master/docs/configuration.md
+
+project_name: "{{BITBUCKET_REPO_SLUG}}"
+
+cascade_config:
+  combine_arrays: false
+
+active_scanners:
+  - Bandit
+  - Brakeman
+  - Semgrep
+  - BundleAudit
+  - Gosec
+  - NpmAudit
+  - YarnAudit
+  - PatternSearch
+  - CargoAudit
+  - RepoNotEmpty
+#  - TruffleHog  # Incompatibility, possibly addressed in upcoming Salus release
+
+enforced_scanners: all
