@@ -12,6 +12,7 @@
 ## Steps
 
 - Fork this repo
+- Enable pipelines in your repo settings (if using bitbucket)
 - Install runtime libs: `pipenv install`
 - Install dev libs: `pipenv install --dev`
 - Install pre-commit hooks: `pipenv run pre-commit install`
