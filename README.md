@@ -64,6 +64,10 @@ faster than `pylint` or `flake8` with comparable coverage.
 - Type Checking: [MyPy](https://mypy-lang.org/).
 - Static analysis: At the moment, not using anything but looking into Microsoft's [Pyright](https://github.com/microsoft/pyright).
 
+Note that `pre-commit` pins versions of these tools with a hard-coded value, but
+the versions used can be automatically updated by running:
+`pipenv run pre-commit autoupdate`.
+
 ## Tests
 
 ### Unit tests
@@ -88,3 +92,4 @@ if needed but these should not be committed to the repo.
 # Todo
 
 - CI example(s)
+- Documentation examples (Sphinx)
