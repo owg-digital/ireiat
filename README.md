@@ -1,68 +1,47 @@
 # README
 
-[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+![Python](https://img.shields.io/badge/python-3.10-blue.svg)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-# When Is This Repo Relevant?
+# Purpose
 
-Unless you're tinkering with throwaway code or ad hoc notebooks scripts: always!
+Oliver Wyman proposes developing a model and executable software application, the
+Intermodal Routing and Environmental Impact Analysis Tool (IREIAT), that will allow
+infrastructure planners to understand expected flows on the US intermodal freight
+network given demand, expected intermodal costs, and network constraints.
+While some infrastructure planners may have in-house, proprietary tools for
+planning, pricing, and network analysis, there is no end-to-end software package
+that generates optimized shipping options across the entire intermodal network.
+Understanding flows is particularly important when seeking to reduce freight transportation
+greenhouse gas (GHG) emissions and congestion, either by increasing the market share of intermodal or deploying new technologies.
 
-# Quick Start
+The goal of this project will be to provide the target user group (infrastructure planners)
+with a tool to understand how cost, transit time, disruptions/resilience, and
+GHG emissions affect freight flows across the current and future intermodal network.
 
-## Dependencies
+At the end of the project, a command-line interface (CLI) tool will be delivered, which
+will allow users to solve freight flow problems on the North American intermodal
+network (leveraging highway, rail, and waterway modes) given specified origin-destination
+demand and flow constraints. Users will be able to examine solutions through text file
+outputs summarizing flow paths, utilization metrics, and overall output metrics
+($/LCOTKM, $/tCO2e, etc.).
 
-- pipenv
+# Quick start
 
-## Steps
+WIP
 
-- Fork this repo
-- Enable pipelines in your repo settings (if using bitbucket)
+# For developers
+
+## Install dependencies
+
+We use `pipenv` for package management and have done development on Windows exclusively.
+
+- Install `pipenv`
 - Install runtime libs: `pipenv install`
 - Install dev libs: `pipenv install --dev`
 - Install pre-commit hooks: `pipenv run pre-commit install`
 - Build / commit your `src` and `tests`
-
-# Some Context
-
-This repo is meant to represent a "canonical" Python project, where some of the infrastructure
-details associated with styling, linting, testing, and test coverage are
-handled so you don't have to think about them. We've taken an opinionated (and incomplete!) view of what
-"canonical" means - comments and pull requests welcome.
-
-This repo is meant to be a *starting point* for your own repo and is
-meant to be forked to save setup time. If you want to use this repo
-from BitBucket, click the "Fork" button from the top of the repo and then
-modify your forked version.
-
-## Package management
-
-We use [Pipenv](https://packaging.python.org/en/latest/tutorials/managing-dependencies/), currently the recommended
-package management solution by the Python packaging authority. See the docs
-for details on installing / removing packages.
-
-To install runtime dependencies run `pipenv install`.
-
-To install dev dependencies run `pipenv install --dev`.
-
-Note that we do NOT use a `pyproject.toml` file because we have not assumed that
-the current library will be packaged (and distributed on, say, PyPi). If this
-canonical repo is used as a package, a `pyproject.toml` file (and associated packaging / build machinery) could be
-added.
-
-## Pre-commit
-
-We use the [pre-commit](https://pre-commit.com/) package, with code style
-and code linting hooks. Once `pipenv` is set up (see above), install
-pre-commit hooks by running: `pipenv run pre-commit install`, which
-should set up style and linting rules.
-
-The following are implemented:
-
-- Style: [black](https://github.com/psf/black). "Any color you like."
-- Linting: [Ruff](https://github.com/charliermarsh/ruff), the Rust-based linter that's much
-faster than `pylint` or `flake8` with comparable coverage.
-- Type Checking: [MyPy](https://mypy-lang.org/).
-- Static analysis: At the moment, not using anything but looking into Microsoft's [Pyright](https://github.com/microsoft/pyright).
 
 Note that `pre-commit` pins versions of these tools with a hard-coded value, but
 the versions used can be automatically updated by running:
@@ -75,21 +54,10 @@ the versions used can be automatically updated by running:
 We use `pytest` and note that test running has not been included in the pre-commit hooks.
 Instead, tests (and test coverage) are expected to be reported as part of a continuous
 integration (CI) suite, either as part of a build/deploy pipeline or via actions
-in a version control provider (Bitbucket, GitHub).
+in a version control provider.
 
 To run the tests on the command line: `pipenv run pytest`
 
-### Test coverage
+## Documentation
 
-Some options here for integrating with CI but coverage is reported
-locally at the moment through [coverage](https://coverage.readthedocs.io/en/7.2.1/)
-by first running:
-`pipenv run coverage run -m pytest` to generate the coverage data.
-
-Then run `pipenv run coverage report`. There are HTML versions
-if needed but these should not be committed to the repo.
-
-# Todo
-
-- CI example(s)
-- Documentation examples (Sphinx)
+WIP

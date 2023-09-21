@@ -4,6 +4,7 @@ verify_ssl = false
 name = "pypi"
 
 [packages]
+click = "*"
 
 [dev-packages]
 pre-commit = "*"
@@ -14,4 +15,4 @@ ruff = "*"
 mypy = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.10"
