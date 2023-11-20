@@ -3,7 +3,7 @@ logs/*
 !logs/.gitkeep
 
 # data
-data/*
+data/raw/**
 !data/raw/.gitkeep
 
 # Compiled Python bytecode
