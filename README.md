@@ -10,7 +10,11 @@ WIP
 
 # Quick start
 
-WIP
+You should be able to install the package with `pip install ireiat`.
+
+After which, you can just run `ireiat` from a command-line!
+
+Run `ireiat --help` for CLI options.
 
 # For developers
 

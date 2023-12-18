@@ -8,7 +8,9 @@ data/raw/**
 
 # Compiled Python bytecode
 *.py[cod]
-
+src/ireiat.egg-info/
+build/
+dist/
 
 # test coverage database
 .coverage
@@ -18,9 +20,6 @@ data/raw/**
 
 # Package files
 *.jar
-
-# Builds
-dist/
 
 # JetBrains IDE
 .idea/
