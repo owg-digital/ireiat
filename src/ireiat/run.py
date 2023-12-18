@@ -2,9 +2,9 @@ import logging
 
 import click
 
-from src.config import Config
-from src.util.http import download_files
-from src.util.logging_ import configure_logging
+from config import Config
+from util.http import download_files
+from util.logging_ import configure_logging
 
 configure_logging(output_file=True)
 logger = logging.getLogger(__name__)

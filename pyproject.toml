@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "IREIAT"
+version = "0.0.1"
+authors = [
+  { name="Nick Padon", email="nicholas.padon@oliverwyman.com" },
+  { name="Marc Meketon", email="marc.meketon@oliverwyman.com" },
+]
+description = "Intermodal Routing and Environmental Impact Analysis Tool"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+ireiat = "run"

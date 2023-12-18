@@ -8,6 +8,8 @@ click = "*"
 tqdm = "*"
 requests = "*"
 pyyaml = "*"
+pyproj = "*"
+igraph = "*"
 
 [dev-packages]
 pre-commit = "*"

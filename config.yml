@@ -1,3 +1,4 @@
 raw_files:
   narn_links.zip: 'https://opendata.arcgis.com/api/v3/datasets/d83e85154a304da995837889cc4012e3_0/downloads/data?format=shp&spatialRefId=4326&where=1%3D1'
   narn_nodes.csv: 'https://opendata.arcgis.com/api/v3/datasets/7958468db586471d94f97e99b916175a_0/downloads/data?format=csv&spatialRefId=4326&where=1%3D1'
+  faf5_regions.zip: 'https://opendata.arcgis.com/api/v3/datasets/e3bcc5d26e5e42709e2bacd6fc37ab43_0/downloads/data?format=shp&spatialRefId=3857&where=1%3D1'

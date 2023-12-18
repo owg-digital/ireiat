@@ -6,26 +6,7 @@
 
 # Purpose
 
-Oliver Wyman proposes developing a model and executable software application, the
-Intermodal Routing and Environmental Impact Analysis Tool (IREIAT), that will allow
-infrastructure planners to understand expected flows on the US intermodal freight
-network given demand, expected intermodal costs, and network constraints.
-While some infrastructure planners may have in-house, proprietary tools for
-planning, pricing, and network analysis, there is no end-to-end software package
-that generates optimized shipping options across the entire intermodal network.
-Understanding flows is particularly important when seeking to reduce freight transportation
-greenhouse gas (GHG) emissions and congestion, either by increasing the market share of intermodal or deploying new technologies.
-
-The goal of this project will be to provide the target user group (infrastructure planners)
-with a tool to understand how cost, transit time, disruptions/resilience, and
-GHG emissions affect freight flows across the current and future intermodal network.
-
-At the end of the project, a command-line interface (CLI) tool will be delivered, which
-will allow users to solve freight flow problems on the North American intermodal
-network (leveraging highway, rail, and waterway modes) given specified origin-destination
-demand and flow constraints. Users will be able to examine solutions through text file
-outputs summarizing flow paths, utilization metrics, and overall output metrics
-($/LCOTKM, $/tCO2e, etc.).
+WIP
 
 # Quick start
 
