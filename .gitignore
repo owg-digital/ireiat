@@ -11,7 +11,7 @@ data/raw/**
 src/ireiat.egg-info/
 build/
 dist/
-
+notebooks/.ipynb_checkpoints/
 # test coverage database
 .coverage
 
