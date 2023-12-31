@@ -9,7 +9,7 @@ tqdm = "*"
 requests = "*"
 pyyaml = "*"
 pyproj = "*"
-igraph = "*"
+pulp = "*"
 
 [dev-packages]
 pre-commit = "*"
