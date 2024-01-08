@@ -26,4 +26,4 @@ classifiers = [
 ]
 
 [project.scripts]
-ireiat = "ireiat.run:execute_all"
+ireiat = "ireiat.run:cli"

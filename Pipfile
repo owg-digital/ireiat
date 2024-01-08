@@ -6,10 +6,13 @@ name = "pypi"
 [packages]
 click = "*"
 tqdm = "*"
-requests = "*"
 pyyaml = "*"
 pyproj = "*"
 pulp = "*"
+igraph = "*"
+pandas = "*"
+joblib = "*"
+requests = "*"
 
 [dev-packages]
 pre-commit = "*"

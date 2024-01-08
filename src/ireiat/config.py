@@ -4,6 +4,8 @@ from typing import Dict, Tuple, List
 
 import yaml
 
+from ireiat.util.cacheable import CACHE_PATH
+
 
 @dataclass
 class Config:
@@ -12,7 +14,7 @@ class Config:
     @property
     def download_targets(self) -> Tuple[List[Path], List[str]]:
         raw_target_fnames, raw_urls = zip(*self.raw_files.items())
-        return [Path("data/raw") / f for f in raw_target_fnames], list(raw_urls)
+        return [CACHE_PATH / "data/raw" / f for f in raw_target_fnames], list(raw_urls)
 
     @classmethod
     def from_yaml(cls, yaml_file_path: Path = Path("config.yml")):

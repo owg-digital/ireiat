@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from pathlib import Path
 from typing import List
+import os
 
 import requests
 from tqdm import tqdm
@@ -29,6 +30,9 @@ def download_file(url: str, save_path: Path, force: bool = False) -> bool:
 
 
 def download_files(urls: List[str], save_paths: List[Path], force: bool = False):
+    for some_path in save_paths:
+        Path(os.path.dirname(some_path)).mkdir(parents=True, exist_ok=True)
     download_single_with_force = partial(download_file, force=force)
+    print(urls, save_paths)
     with ThreadPoolExecutor() as executor:
         executor.map(download_single_with_force, urls, save_paths)
