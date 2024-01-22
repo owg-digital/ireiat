@@ -8,6 +8,9 @@ data/raw/**
 data/transformed/**
 !data/transformed/.gitkeep
 
+# documentation
+docs/build/**
+
 # Compiled Python bytecode
 *.py[cod]
 src/ireiat.egg-info/

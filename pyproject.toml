@@ -11,6 +11,8 @@ authors = [
 ]
 description = "Intermodal Routing and Environmental Impact Analysis Tool"
 readme = "README.md"
+license = {file = "LICENSE"}
+keywords = ["intermodal","algorithm b","ireiat","transportation"]
 requires-python = ">=3.10"
 dependencies = [
     "click",
