@@ -13,7 +13,7 @@ description = "Intermodal Routing and Environmental Impact Analysis Tool"
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["intermodal","algorithm b","ireiat","transportation"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "click",
     "tqdm",
@@ -26,6 +26,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
+
+[tool.black]
+line-length = 100
 
 [project.scripts]
 ireiat = "ireiat.run:cli"
