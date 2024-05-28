@@ -51,18 +51,17 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
         the filename and the default path, which is the user directory
         """
         source_path = CACHE_PATH / metadata.get("source_path", "")
-
         fname = metadata.get("filename") or f"{asset_key.path[0]}.{metadata.get('format')}"
         read_path = Path(source_path) / fname
         return str(read_path.absolute())
 
-    def handle_output(self, context, obj: pd.DataFrame | geopandas.GeoDataFrame):
+    def handle_output(self, context, obj: pd.DataFrame | geopandas.GeoDataFrame) -> None:
         """This saves the dataframe according to the format implemented in FileSerializationResolver."""
 
         fpath = self._get_fs_path(context.asset_key, context.metadata)
         FileSerializationResolver.serialize(obj)(fpath)
 
-    def load_input(self, context):
+    def load_input(self, context) -> pd.DataFrame | geopandas.GeoDataFrame:
         """This reads a dataframe based on file ending and metadata"""
         fpath = self._get_fs_path(
             context.upstream_output.asset_key, context.upstream_output.metadata

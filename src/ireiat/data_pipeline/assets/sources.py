@@ -14,3 +14,17 @@ faf5_regions = dagster.SourceAsset(
         ),
     },
 )
+
+us_county_shp_files = dagster.SourceAsset(
+    key=dagster.AssetKey("us_county_shp_files"),
+    description="Publicly available GIS data for US counties",
+    io_manager_key="custom_io_manager",
+    metadata={
+        "format": "zip",
+        "filename": "us_county_shp_files.zip",
+        "source_path": "raw/",
+        "dashboard_url": dagster.MetadataValue.url(
+            "https://www2.census.gov/geo/tiger/TIGER2023/COUNTY/tl_2023_us_county.zip"
+        ),
+    },
+)
