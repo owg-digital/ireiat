@@ -38,6 +38,7 @@ def download_file(url: str, save_path: Path | str, force: bool = False) -> bool:
 
 
 def download_files(urls: List[str], save_paths: List[Path], force: bool = False):
+    """Downloads multiple files in a thread pool and saves to disk"""
     for some_path in save_paths:
         Path(os.path.dirname(some_path)).mkdir(parents=True, exist_ok=True)
     download_single_with_force = partial(download_file, force=force)

@@ -6,6 +6,30 @@ import dagster
 import geopandas
 import numpy as np
 
+from ireiat.data_pipeline.assets.demand.sources import (
+    FAF5_REGIONS_DESCRIPTION,
+    US_COUNTY_SHP_FILES_DESCRIPTION,
+)
+from ireiat.data_pipeline.metadata import publish_metadata
+
+
+@dagster.asset(io_manager_key="mem_io_manager", description=FAF5_REGIONS_DESCRIPTION)
+def faf5_regions(
+    context: dagster.AssetExecutionContext, faf5_regions_src: geopandas.GeoDataFrame
+) -> geopandas.GeoDataFrame:
+    f""" {FAF5_REGIONS_DESCRIPTION}"""
+    publish_metadata(context, faf5_regions_src)
+    return faf5_regions_src
+
+
+@dagster.asset(io_manager_key="mem_io_manager", description=US_COUNTY_SHP_FILES_DESCRIPTION)
+def us_county_shp_files(
+    context: dagster.AssetExecutionContext, us_county_shp_files_src: geopandas.GeoDataFrame
+) -> geopandas.GeoDataFrame:
+    f""" {US_COUNTY_SHP_FILES_DESCRIPTION} """
+    publish_metadata(context, us_county_shp_files_src)
+    return us_county_shp_files_src
+
 
 @dagster.asset(io_manager_key="default_io_manager")
 def faf_id_to_county_areas(
