@@ -11,8 +11,16 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def download_file(url: str, save_path: Path, force: bool = False) -> bool:
-    # Streaming, so we can iterate over the response.
+def download_file(url: str, save_path: Path | str, force: bool = False) -> bool:
+    """Simple download helper to stream the contents of `url` to `save_path`.
+    If `save_path` does not exist (including parent directories), it will be created.
+    """
+
+    # assume save_path is a fully qualified filename x/y/z.ending
+    if isinstance(save_path, str):
+        save_path = Path(save_path)
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+
     if not force:
         if save_path.exists():
             logger.info(f"File {save_path} exists - skipping download.")

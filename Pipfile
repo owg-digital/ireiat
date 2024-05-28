@@ -11,6 +11,10 @@ pyproj = "*"
 pandas = "*"
 joblib = "*"
 requests = "*"
+dagster = "*"
+dagster-webserver = "*"
+pyogrio = "*"
+geopandas = "*"
 
 [dev-packages]
 pre-commit = "*"

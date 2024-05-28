@@ -1,10 +1,10 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Tuple, List
-
+import os
 import yaml
 
-from ireiat.util.cacheable import CACHE_PATH
+CACHE_PATH = Path(os.getenv("HOMEPATH", "~")) / ".irieat"
 
 
 @dataclass
