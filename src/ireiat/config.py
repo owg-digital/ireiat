@@ -5,6 +5,7 @@ import os
 import yaml
 
 CACHE_PATH = Path(os.getenv("HOMEPATH", "~")) / ".irieat"
+TOLERANCE = 1e-5
 
 
 @dataclass

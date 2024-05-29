@@ -4,6 +4,8 @@ from typing import Dict, Tuple
 import dagster
 import pandas as pd
 
+from ireiat.config import TOLERANCE
+
 
 @dagster.asset(
     io_manager_key="default_io_manager", description="(State FIPS, County FIPS) -> Metric"
@@ -29,7 +31,7 @@ def faf_id_to_county_id_allocation_map(
     faf_id_to_county_areas: Dict[str, Dict[Tuple[str, str], float]],
     actual_state_county_to_metric_map: Dict[Tuple[str, str], int],
 ):
-    TOLERANCE = 1e-6
+
     faf_id_to_county_id_metric_map: Dict[str, Dict[Tuple[str, str], float]] = defaultdict(dict)
 
     # look up the county population within each faf zone
@@ -44,7 +46,7 @@ def faf_id_to_county_id_allocation_map(
     for faf_id, vals_dict in faf_id_to_county_id_metric_map.items():
         faf_total_metric_map[faf_id] = sum(vals_dict.values())
 
-    # check that the totals are equal
+    # check that the totals between the metri and thosee allocated to counties are equal
     assert sum(actual_state_county_to_metric_map.values()) == sum(faf_total_metric_map.values())
 
     # determine the percentage of the faf demand that should be allocated to the county

@@ -4,7 +4,7 @@ from .assets import demand
 from .io_manager import TabularDataLocalIOManager
 from ..config import CACHE_PATH
 
-faf5_assets = dagster.load_assets_from_package_module(demand)
+faf5_assets = dagster.load_assets_from_package_module(demand, group_name="demand")
 
 defs = dagster.Definitions(
     assets=faf5_assets,
