@@ -30,8 +30,8 @@ def download(force):
 
 
 @cli.command()
-def naive():
-    logger.info("Running stuff.")
+def dagster():
+    logger.info("Running dagster webserver.")
     subprocess.run("dagster dev")
 
 

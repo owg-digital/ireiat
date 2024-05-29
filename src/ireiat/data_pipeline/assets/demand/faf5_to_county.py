@@ -6,40 +6,16 @@ import dagster
 import geopandas
 import numpy as np
 
-from ireiat.data_pipeline.assets.demand.sources import (
-    FAF5_REGIONS_DESCRIPTION,
-    US_COUNTY_SHP_FILES_DESCRIPTION,
-)
-from ireiat.data_pipeline.metadata import publish_metadata
-
-
-@dagster.asset(io_manager_key="mem_io_manager", description=FAF5_REGIONS_DESCRIPTION)
-def faf5_regions(
-    context: dagster.AssetExecutionContext, faf5_regions_src: geopandas.GeoDataFrame
-) -> geopandas.GeoDataFrame:
-    f""" {FAF5_REGIONS_DESCRIPTION}"""
-    publish_metadata(context, faf5_regions_src)
-    return faf5_regions_src
-
-
-@dagster.asset(io_manager_key="mem_io_manager", description=US_COUNTY_SHP_FILES_DESCRIPTION)
-def us_county_shp_files(
-    context: dagster.AssetExecutionContext, us_county_shp_files_src: geopandas.GeoDataFrame
-) -> geopandas.GeoDataFrame:
-    f""" {US_COUNTY_SHP_FILES_DESCRIPTION} """
-    publish_metadata(context, us_county_shp_files_src)
-    return us_county_shp_files_src
-
 
 @dagster.asset(io_manager_key="default_io_manager")
 def faf_id_to_county_areas(
     context: dagster.AssetExecutionContext,
-    faf5_regions: geopandas.GeoDataFrame,
-    us_county_shp_files: geopandas.GeoDataFrame,
+    faf5_regions_src: geopandas.GeoDataFrame,
+    us_county_shp_files_src: geopandas.GeoDataFrame,
 ) -> Dict[str, Dict[Tuple[str, str], float]]:
     """Reads FAF5 GIS data, county GIS data, and computes a FAF zone -> (County FIPS, State FIPS) -> % area map"""
     # area computation requires consistent CRS representation
-    county_gdf = us_county_shp_files.to_crs(faf5_regions.crs)
+    county_gdf = us_county_shp_files_src.to_crs(faf5_regions_src.crs)
     county_gdf["area"] = county_gdf.area
 
     # county shp file data is unique at STATEFP, COUNTYFP composite key
@@ -51,7 +27,7 @@ def faf_id_to_county_areas(
     # Compute which counties are part of which FAF5 region (and what percentage of their area)
     INTERSECTION_AREA_TOLERANCE_PERCENT = 0.01
     faf_zone_to_county = dict()
-    for row in faf5_regions.itertuples():
+    for row in faf5_regions_src.itertuples():
         # return just the "overlap" of the FAF5 region with county data
         county_intersection = county_gdf.intersection(row.geometry)
         nonzero_county_intersection = county_intersection[~county_intersection.is_empty]
@@ -109,7 +85,7 @@ def faf_id_to_county_areas(
     assert min(county_coverage_canonical.values()) == 1.0
 
     # ensure every faf zone is covered
-    assert (set(faf5_regions["faf_zone"]) - set(faf_zone_to_county_canonical.keys())) == set()
+    assert (set(faf5_regions_src["faf_zone"]) - set(faf_zone_to_county_canonical.keys())) == set()
 
     # we relied on the index of the county geographic data to identify each county row - but, for usage with census data,
     # we serialize using the (STATEFP, COUNTYFP) code

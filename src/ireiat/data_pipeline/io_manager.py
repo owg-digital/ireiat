@@ -1,6 +1,7 @@
-from functools import singledispatchmethod
+import tempfile
 from pathlib import Path
 from typing import Optional, Mapping, Callable
+from zipfile import ZipFile
 
 import dagster
 import geopandas
@@ -11,41 +12,38 @@ from ireiat.config import CACHE_PATH
 from ireiat.util.http import download_file
 
 
-class FileSerializationResolver:
-    @singledispatchmethod
-    @staticmethod
-    def serialize(obj) -> Callable:
-        raise NotImplementedError(f"Cannot read or write {obj}!")
-
-    @serialize.register
-    @staticmethod
-    def _(obj: pd.DataFrame) -> Callable:
-        return obj.to_csv
-
-    @serialize.register
-    @staticmethod
-    def _(obj: geopandas.GeoDataFrame) -> Callable:
-        return obj.to_parquet
-
-
-def _get_read_function(format: str) -> Callable:
+def _get_read_function(format: str, metadata: dict = None) -> Callable:
     format_mapping = {
         "csv": pd.read_csv,
+        "parquet": pd.read_parquet,
         "zip": pyogrio.read_dataframe,
         "txt": pd.read_table,
         "xlsx": pd.read_excel,
     }
-
+    if metadata.get("temp_unzip", False):
+        return _temp_unzip_and_read
     if format in format_mapping:
         return format_mapping[format]
     else:
         raise NotImplementedError(f"Cannot read file of type {format}!")
 
 
+def _temp_unzip_and_read(fpath, **kwargs):
+    """Unzips the zipfile passed at fpath and reads the first csv into a pandas dataframe"""
+    zip = ZipFile(fpath)
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        zip.extractall(path=tmpdirname)
+        target_csvs = [f for f in zip.namelist() if f.endswith("csv")]
+        pdf = pd.read_csv(zip.open(target_csvs[0]), **kwargs)
+        zip.close()
+    return pdf
+
+
 class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
     """Translates tabular data (csv, txt, xlsx, and shp files) on the local filesystem."""
 
-    def _get_fs_path(self, asset_key: dagster.AssetKey, metadata: Optional[Mapping]) -> str:
+    @staticmethod
+    def _get_fs_path(asset_key: dagster.AssetKey, metadata: Optional[Mapping]) -> str:
         """Gets the filesystem path based on the asset key and/or metadata.
         If the full source_path `some_file.csv` is passed, then use that. Otherwise use
         the filename and the default path, which is the user directory
@@ -58,12 +56,18 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
     def handle_output(self, context, obj: pd.DataFrame | geopandas.GeoDataFrame) -> None:
         """This saves the dataframe according to the format implemented in FileSerializationResolver."""
 
-        fpath = self._get_fs_path(context.asset_key, context.metadata)
-        FileSerializationResolver.serialize(obj)(fpath)
+        fpath = TabularDataLocalIOManager._get_fs_path(context.asset_key, context.metadata)
+        fmt = fpath.split(".")[-1]
+        if fmt == "parquet":
+            obj.to_parquet(fpath)
+        elif fmt == "csv":
+            obj.to_csv(fpath)
+        else:
+            raise NotImplementedError(f"Cannot read file of type {fmt}!")
 
     def load_input(self, context) -> pd.DataFrame | geopandas.GeoDataFrame:
         """This reads a dataframe based on file ending and metadata"""
-        fpath = self._get_fs_path(
+        fpath = TabularDataLocalIOManager._get_fs_path(
             context.upstream_output.asset_key, context.upstream_output.metadata
         )
         if not Path(fpath).exists():
@@ -74,10 +78,14 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
             if not url:
                 raise IOError(f"No metadata url specified for {fpath}!")
             download_file(url.url, fpath)
-        fmt = fpath.split(".")[-1]
-        read_func = _get_read_function(fmt)
+
         read_kwargs: Optional[dagster.JsonMetadataValue] = context.upstream_output.metadata.get(
             "read_kwargs"
         )
         parsed_read_kwargs: dict = read_kwargs.data if read_kwargs else dict()
+
+        # figure out how to read this based on the ending
+        fmt = fpath.split(".")[-1]
+        read_func = _get_read_function(fmt, context.upstream_output.metadata)
+
         return read_func(fpath, **parsed_read_kwargs)
