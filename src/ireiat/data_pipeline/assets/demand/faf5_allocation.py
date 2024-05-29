@@ -46,7 +46,7 @@ def faf_id_to_county_id_allocation_map(
     for faf_id, vals_dict in faf_id_to_county_id_metric_map.items():
         faf_total_metric_map[faf_id] = sum(vals_dict.values())
 
-    # check that the totals between the metri and thosee allocated to counties are equal
+    # check that the totals between the metric and those allocated to counties are equal
     assert sum(actual_state_county_to_metric_map.values()) == sum(faf_total_metric_map.values())
 
     # determine the percentage of the faf demand that should be allocated to the county
