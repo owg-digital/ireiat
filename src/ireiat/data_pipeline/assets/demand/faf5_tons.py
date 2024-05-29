@@ -26,7 +26,7 @@ def faf5_truck_demand(
 
 
 @dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
-def county_to_county_tons(
+def county_to_county_highway_tons(
     context: dagster.AssetExecutionContext,
     faf5_truck_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
