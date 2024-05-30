@@ -81,11 +81,14 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
         """This saves the dataframe according to the format implemented in FileSerializationResolver."""
 
         fpath = _get_fs_path(context.asset_key, context.metadata)
+
+        write_kwargs: Optional[dagster.JsonMetadataValue] = context.metadata.get("write_kwargs")
+        parsed_write_kwargs: dict = write_kwargs.data if write_kwargs else dict()
         fmt = fpath.split(".")[-1]
         if fmt == "parquet":
-            obj.to_parquet(fpath)
+            obj.to_parquet(fpath, **parsed_write_kwargs)
         elif fmt == "csv":
-            obj.to_csv(fpath)
+            obj.to_csv(fpath, **parsed_write_kwargs)
         else:
             raise NotImplementedError(f"Cannot read file of type {fmt}!")
 

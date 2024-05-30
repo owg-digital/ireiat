@@ -8,7 +8,7 @@ import igraph as ig
 import numpy as np
 import pandas as pd
 
-from ireiat.config import LATLONG_CRS, HIGHWAY_BETA, HIGHWAY_ALPHA, HIGHWAY_CAPACITY_TONS
+from ireiat.config import LATLONG_CRS
 from ireiat.data_pipeline.metadata import publish_metadata
 
 
@@ -43,7 +43,7 @@ def undirected_highway_edges(
     return coords
 
 
-@dagster.asset()
+@dagster.asset(io_manager_key="default_io_manager")
 def complete_highway_node_to_idx(undirected_highway_edges: pd.DataFrame):
     """Generate unique nodes->indices based on the entire highway network"""
     unfiltered_node_idx_dict: Dict[Tuple[float, float], int] = dict()
@@ -62,13 +62,13 @@ def complete_highway_node_to_idx(undirected_highway_edges: pd.DataFrame):
     return unfiltered_node_idx_dict
 
 
-@dagster.asset()
+@dagster.asset(io_manager_key="default_io_manager")
 def complete_highway_idx_to_node(complete_highway_node_to_idx):
     """Generates unique indices->nodes based on the entire highway network"""
     return {v: k for k, v in complete_highway_node_to_idx.items()}
 
 
-@dagster.asset()
+@dagster.asset(io_manager_key="default_io_manager")
 def strongly_connected_highway_graph(
     context: dagster.AssetExecutionContext,
     undirected_highway_edges: pd.DataFrame,
@@ -107,6 +107,7 @@ def strongly_connected_highway_graph(
             "length": [attr[0] for attr in edge_attributes],
             "speed": [attr[1] for attr in edge_attributes],
         },
+        directed=True,
     )
     context.log.info(f"Initial constructed graph connected?: {g.is_connected()}")
 
@@ -143,13 +144,5 @@ def highway_network_dataframe(
 
     # create and return a dataframe
     pdf = pd.DataFrame(connected_edge_tuples, columns=["tail", "head", "length", "speed"])
-    pdf["speed"] = pdf["speed"].fillna(pdf["speed"].mean())  # fill in any null speeds
-    pdf["fft"] = pdf["length"] / pdf["speed"]
-    pdf["beta"] = HIGHWAY_BETA
-    pdf["alpha"] = HIGHWAY_ALPHA
-    pdf["capacity"] = HIGHWAY_CAPACITY_TONS
-    pdf = pdf.sort_values(["tail", "head"])
-
-    assert pdf["speed"].min() > 0
     publish_metadata(context, pdf)
     return pdf
