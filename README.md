@@ -24,8 +24,7 @@ can be downloaded [here](!https://www.python.org/downloads/release/python-3117/)
 Once you have Python installed you should be able to install the package
 with `pip install ireiat`. After which, you can just run `ireiat` from a command-line!
 
-Run `ireiat --help` for CLI options or see the full documentation (WIP, not yet released)
-
+Run `ireiat --help` for CLI options or see the [full documentation](!https://ireiat.readthedocs.io/en/latest/).
 # Acknowledgement
 
 The information, data, or work presented herein was funded in part by the Advanced Research Projects Agency-Energy
