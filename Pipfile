@@ -24,8 +24,8 @@ black = "*"
 ruff = "*"
 mypy = "*"
 sphinx = "*"
-sphinx-rtd-theme = "*"
 sphinx-click = "*"
+sphinx-rtd-theme = "*"
 
 [requires]
 python_version = "3.11"
