@@ -12,6 +12,8 @@ Welcome to IREIAT's documentation!
 
 We are working on it.
 
+   network/highway_network
+
 Indices and tables
 ==================
 

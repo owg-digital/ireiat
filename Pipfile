@@ -15,6 +15,7 @@ dagster = "*"
 dagster-webserver = "*"
 pyogrio = "*"
 geopandas = "*"
+igraph = "*"
 
 [dev-packages]
 pre-commit = "*"
