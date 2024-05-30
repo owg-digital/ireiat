@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "IREIAT"
-copyright = "2022, Oliver Wyman"
+copyright = "2024, Oliver Wyman"
 author = "Nick Padon"
 
 # The full version, including alpha/beta/rc tags
