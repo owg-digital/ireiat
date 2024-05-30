@@ -13,6 +13,7 @@ from ireiat.util.http import download_file
 
 
 def _get_read_function(format: str, metadata: dict = None) -> Callable:
+    """Returns a function for file-reading based on the `format` and possibly `metadata`"""
     format_mapping = {
         "csv": pd.read_csv,
         "parquet": pd.read_parquet,
@@ -39,24 +40,47 @@ def _temp_unzip_and_read(fpath, **kwargs):
     return pdf
 
 
+def _get_fs_path(asset_key: dagster.AssetKey, metadata: Optional[Mapping]) -> str:
+    """Gets the filesystem path based on the asset key and/or metadata.
+    If the full source_path `some_file.csv` is passed, then use that. Otherwise use
+    the filename and the default path, which is the user directory
+    """
+    source_path = CACHE_PATH / metadata.get("source_path", "")
+    fname = metadata.get("filename") or f"{asset_key.path[0]}.{metadata.get('format')}"
+    read_path = Path(source_path) / fname
+    return str(read_path.absolute())
+
+
+def read_or_attempt_download(
+    asset_key: dagster.AssetKey, current_asset_metadata
+) -> pd.DataFrame | geopandas.GeoDataFrame:
+    """Reads the file given the metadata. If the file does not exist, attempts to download based on url information
+    within the metadata. If download info does not exist and the file is not in the filesystem, throws an IOError
+    """
+    fpath = _get_fs_path(asset_key, current_asset_metadata)
+    if not Path(fpath).exists():
+        url: Optional[dagster.UrlMetadataValue] = current_asset_metadata.get("dashboard_url")
+        if not url:
+            raise IOError(f"No metadata url specified for {fpath}!")
+        download_file(url.url, fpath)
+
+    read_kwargs: Optional[dagster.JsonMetadataValue] = current_asset_metadata.get("read_kwargs")
+    parsed_read_kwargs: dict = read_kwargs.data if read_kwargs else dict()
+
+    # figure out how to read this based on the ending
+    fmt = fpath.split(".")[-1]
+    read_func = _get_read_function(fmt, current_asset_metadata)
+
+    return read_func(fpath, **parsed_read_kwargs)
+
+
 class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
     """Translates tabular data (csv, txt, xlsx, and shp files) on the local filesystem."""
-
-    @staticmethod
-    def _get_fs_path(asset_key: dagster.AssetKey, metadata: Optional[Mapping]) -> str:
-        """Gets the filesystem path based on the asset key and/or metadata.
-        If the full source_path `some_file.csv` is passed, then use that. Otherwise use
-        the filename and the default path, which is the user directory
-        """
-        source_path = CACHE_PATH / metadata.get("source_path", "")
-        fname = metadata.get("filename") or f"{asset_key.path[0]}.{metadata.get('format')}"
-        read_path = Path(source_path) / fname
-        return str(read_path.absolute())
 
     def handle_output(self, context, obj: pd.DataFrame | geopandas.GeoDataFrame) -> None:
         """This saves the dataframe according to the format implemented in FileSerializationResolver."""
 
-        fpath = TabularDataLocalIOManager._get_fs_path(context.asset_key, context.metadata)
+        fpath = _get_fs_path(context.asset_key, context.metadata)
         fmt = fpath.split(".")[-1]
         if fmt == "parquet":
             obj.to_parquet(fpath)
@@ -67,25 +91,6 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
 
     def load_input(self, context) -> pd.DataFrame | geopandas.GeoDataFrame:
         """This reads a dataframe based on file ending and metadata"""
-        fpath = TabularDataLocalIOManager._get_fs_path(
+        return read_or_attempt_download(
             context.upstream_output.asset_key, context.upstream_output.metadata
         )
-        if not Path(fpath).exists():
-            context.log.info(f"File {fpath} does not exist! Attempting download...")
-            url: Optional[dagster.UrlMetadataValue] = context.upstream_output.metadata.get(
-                "dashboard_url"
-            )
-            if not url:
-                raise IOError(f"No metadata url specified for {fpath}!")
-            download_file(url.url, fpath)
-
-        read_kwargs: Optional[dagster.JsonMetadataValue] = context.upstream_output.metadata.get(
-            "read_kwargs"
-        )
-        parsed_read_kwargs: dict = read_kwargs.data if read_kwargs else dict()
-
-        # figure out how to read this based on the ending
-        fmt = fpath.split(".")[-1]
-        read_func = _get_read_function(fmt, context.upstream_output.metadata)
-
-        return read_func(fpath, **parsed_read_kwargs)

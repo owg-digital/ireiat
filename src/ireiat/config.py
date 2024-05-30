@@ -4,8 +4,14 @@ from typing import Dict, Tuple, List
 import os
 import yaml
 
-CACHE_PATH = Path(os.getenv("HOMEPATH", "~")) / ".irieat"
+CACHE_PATH = Path(os.getenv("HOMEPATH", "~")) / ".ireiat"
 TOLERANCE = 1e-5
+LATLONG_CRS = "EPSG:4326"
+HIGHWAY_CAPACITY_TONS = (
+    100000  # TODO (NP): Placeholder while we translate from tons->vehicles or put a tonnage limit
+)
+HIGHWAY_BETA = 0.15
+HIGHWAY_ALPHA = 4
 
 
 @dataclass

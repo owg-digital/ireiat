@@ -4,9 +4,7 @@ import subprocess
 
 import click
 
-from ireiat.config import Config, CACHE_PATH
-
-from ireiat.util.http import download_files
+from ireiat.config import CACHE_PATH
 from ireiat.util.logging_ import configure_logging
 
 configure_logging(output_file=True)
@@ -21,12 +19,8 @@ def cli(debug):
 
 
 @cli.command()
-@click.option("--force/--no-force", default=False, help="Force a re-download of needed files")
-def download(force):
-    config = Config.from_yaml()
-    paths, urls = config.download_targets
-    logger.info("Getting raw files...")
-    download_files(urls, paths, force=force)
+def solve():
+    logger.warning("Not yet implemented.")
 
 
 @cli.command()
