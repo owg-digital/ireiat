@@ -16,6 +16,7 @@ dagster-webserver = "*"
 pyogrio = "*"
 geopandas = "*"
 igraph = "*"
+scikit-learn = "*"
 
 [dev-packages]
 pre-commit = "*"

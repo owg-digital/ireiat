@@ -10,9 +10,9 @@ Welcome to IREIAT's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-We are working on it.
-
    network/highway_network
+
+We are actively working on it.
 
 Indices and tables
 ==================

@@ -68,12 +68,12 @@ def complete_highway_idx_to_node(complete_highway_node_to_idx):
     return {v: k for k, v in complete_highway_node_to_idx.items()}
 
 
-@dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
+@dagster.asset()
 def strongly_connected_highway_graph(
     context: dagster.AssetExecutionContext,
     undirected_highway_edges: pd.DataFrame,
     complete_highway_node_to_idx: Dict[Tuple[float, float], int],
-) -> pd.DataFrame:
+) -> ig.Graph:
     # generate directed edges from the undirected edges based on the "dir" field
     edge_tuples = []
     edge_attributes = []
@@ -129,8 +129,16 @@ def strongly_connected_highway_graph(
 
     # construct a connected subgraph
     connected_subgraph = g.subgraph(allowed_node_indices)
+    return connected_subgraph
+
+
+@dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
+def highway_network_dataframe(
+    context: dagster.AssetExecutionContext, strongly_connected_highway_graph: ig.Graph
+) -> pd.DataFrame:
+    """Returns a dataframe of graph edges along with attributes needed to solve the TAP"""
     connected_edge_tuples = [
-        (e.source, e.target, e["length"], e["speed"]) for e in connected_subgraph.es
+        (e.source, e.target, e["length"], e["speed"]) for e in strongly_connected_highway_graph.es
     ]
 
     # create and return a dataframe

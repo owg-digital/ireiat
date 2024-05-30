@@ -25,7 +25,8 @@ dependencies = [
     "dagster",
     "dagster-webserver",
     "pyogrio",
-    "geopandas"
+    "geopandas",
+    "scikit-learn"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
