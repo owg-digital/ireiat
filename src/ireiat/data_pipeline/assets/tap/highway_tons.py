@@ -54,11 +54,12 @@ def in_network_highway_tons(
     io_manager_key="custom_io_manager",
     metadata={"format": "parquet", "write_kwargs": dagster.MetadataValue.json({"index": False})},
 )
-def highway_trips(
+def tap_highway_tons(
     context: dagster.AssetExecutionContext,
     in_network_highway_tons: pd.DataFrame,
     county_fips_to_highway_network_node_idx: Dict[Tuple[str, str], int],
 ) -> pd.DataFrame:
+    """Tons attached to the highway network nodes (from, to, tons)"""
     od_tuples = []
     for row in in_network_highway_tons.itertuples():
         orig = (row.state_orig, row.county_orig)
