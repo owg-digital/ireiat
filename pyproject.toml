@@ -17,6 +17,7 @@ requires-python = ">=3.11"
 dependencies = [
     "click",
     "igraph",
+    "matplotlib",
     "tqdm",
     "requests",
     "pandas",

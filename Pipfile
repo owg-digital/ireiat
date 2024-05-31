@@ -17,6 +17,7 @@ pyogrio = "*"
 geopandas = "*"
 igraph = "*"
 scikit-learn = "*"
+matplotlib = "*"
 
 [dev-packages]
 pre-commit = "*"

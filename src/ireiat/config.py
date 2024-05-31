@@ -10,7 +10,7 @@ TOLERANCE = 1e-5
 LATLONG_CRS = "EPSG:4326"
 ALBERS_CRS = "EPSG:5070"
 HIGHWAY_CAPACITY_TONS = (
-    100000  # TODO (NP): Placeholder while we translate from tons->vehicles or put a tonnage limit
+    80000  # TODO (NP): Placeholder while we translate from tons->vehicles or put a tonnage limit
 )
 HIGHWAY_BETA = 4  # the exponent in the congestion term
 HIGHWAY_ALPHA = 0.15  # the scalar in the congestion term

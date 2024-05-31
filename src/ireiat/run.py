@@ -8,6 +8,7 @@ import click
 
 from ireiat import r_source
 from ireiat.config import CACHE_PATH
+from ireiat.postprocessing.postprocessor import PostProcessor
 from ireiat.util.logging_ import configure_logging
 
 configure_logging(output_file=True)
@@ -53,6 +54,29 @@ def dagster():
     """Runs the dagster web server to run data pipeline transformations"""
     logger.info("Running dagster webserver.")
     subprocess.run("dagster dev")
+
+
+@cli.command()
+@click.option(
+    "--solution", "-s", type=click.Path(exists=True), default=CACHE_PATH / "traffic.parquet"
+)
+@click.option(
+    "--solution-graph",
+    "-g",
+    type=click.Path(exists=True),
+    default=CACHE_PATH / "strongly_connected_highway_graph",
+)
+@click.option(
+    "--network-shp",
+    "-n",
+    type=click.Path(exists=True),
+    default=CACHE_PATH / "raw/faf5_highway_links.zip",
+)
+def postprocess(solution: Path, solution_graph: Path, network_shp: Path):
+    """Post processes results"""
+    logger.info("Running postprocessing.")
+    pp = PostProcessor(solution, solution_graph, network_shp)
+    pp.postprocess()
 
 
 if __name__ == "__main__":
