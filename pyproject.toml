@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ireiat"
-version = "v0.0.2rc1"
+version = "v0.0.1rc1"
 authors = [
   { name="Nick Padon", email="nicholas.padon@oliverwyman.com" },
   { name="Marc Meketon", email="marc.meketon@oliverwyman.com" },
@@ -42,6 +42,12 @@ module_name = "ireiat.data_pipeline"
 
 [project.scripts]
 ireiat = "ireiat.run:cli"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.r"] # bundle all R files in the distributed package
 
 [project.urls]
 "Source" = "https://github.com/owg-digital/ireiat"

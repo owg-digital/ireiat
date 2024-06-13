@@ -37,6 +37,7 @@ def configure_logging(
 
     # add a file handler if output_file is specified
     if output_file:
+        output_file_dir.mkdir(exist_ok=True)
         default_log_key = datetime.now().strftime("%Y%m%d%H%M%S")
         default_log_fname = f"{default_log_key}.log"
         fname = output_file_name if output_file_name else default_log_fname
