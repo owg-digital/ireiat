@@ -32,9 +32,15 @@ tap_assets_job = dagster.define_asset_job(
     name="tap_job", selection=_filter_for_non_source_assets(tap_assets)
 )
 
+# all assets
+all_assets = [*demand_assets, *highway_network_assets, *tap_assets]
+all_assets_job = dagster.define_asset_job(
+    name="all", selection=_filter_for_non_source_assets(all_assets)
+)
+
 defs = dagster.Definitions(
-    assets=[*demand_assets, *highway_network_assets, *tap_assets],
-    jobs=[demand_assets_job, highway_network_assets_job, tap_assets_job],
+    assets=all_assets,
+    jobs=[demand_assets_job, highway_network_assets_job, tap_assets_job, all_assets_job],
     resources={
         "default_io_manager": dagster.FilesystemIOManager(base_dir=str(CACHE_PATH)),
         "custom_io_manager": TabularDataLocalIOManager(),

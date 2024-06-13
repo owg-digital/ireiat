@@ -9,7 +9,7 @@ import pandas as pd
 import pyogrio
 
 from ireiat.config import CACHE_PATH
-from ireiat.util.http import download_file
+from ireiat.util.http import download_uncached_file
 
 
 def _get_read_function(format: str, metadata: dict = None) -> Callable:
@@ -58,11 +58,14 @@ def read_or_attempt_download(
     within the metadata. If download info does not exist and the file is not in the filesystem, throws an IOError
     """
     fpath = _get_fs_path(asset_key, current_asset_metadata)
+
+    # if URL specified, attempt download...
+    url: Optional[dagster.UrlMetadataValue] = current_asset_metadata.get("dashboard_url")
+    if url:
+        download_uncached_file(url.url, fpath)
+
     if not Path(fpath).exists():
-        url: Optional[dagster.UrlMetadataValue] = current_asset_metadata.get("dashboard_url")
-        if not url:
-            raise IOError(f"No metadata url specified for {fpath}!")
-        download_file(url.url, fpath)
+        raise IOError(f"No metadata url specified for {fpath}!")
 
     read_kwargs: Optional[dagster.JsonMetadataValue] = current_asset_metadata.get("read_kwargs")
     parsed_read_kwargs: dict = read_kwargs.data if read_kwargs else dict()
