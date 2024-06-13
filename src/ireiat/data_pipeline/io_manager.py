@@ -21,7 +21,7 @@ def _get_read_function(format: str, metadata: dict = None) -> Callable:
         "txt": pd.read_table,
         "xlsx": pd.read_excel,
     }
-    if metadata.get("temp_unzip", False):
+    if metadata and metadata.get("temp_unzip", False):
         return _temp_unzip_and_read
     if format in format_mapping:
         return format_mapping[format]

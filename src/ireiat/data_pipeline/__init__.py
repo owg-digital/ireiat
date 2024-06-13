@@ -8,7 +8,7 @@ from ..config import CACHE_PATH
 
 
 def _filter_for_non_source_assets(assets: Sequence) -> Sequence:
-    """Retuns a sequence of non dagster.SourecAsset objects"""
+    """Retuns a sequence of non dagster.SourceAsset objects"""
     return [a for a in assets if not isinstance(a, dagster.SourceAsset)]
 
 
