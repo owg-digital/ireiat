@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ireiat"
-version = "0.0.1"
+version = "v0.0.2rc1"
 authors = [
   { name="Nick Padon", email="nicholas.padon@oliverwyman.com" },
   { name="Marc Meketon", email="marc.meketon@oliverwyman.com" },
@@ -42,3 +42,6 @@ module_name = "ireiat.data_pipeline"
 
 [project.scripts]
 ireiat = "ireiat.run:cli"
+
+[project.urls]
+"Source" = "https://github.com/owg-digital/ireiat"
