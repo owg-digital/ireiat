@@ -1,11 +1,8 @@
-# CONTRIBUTING
+# Contributing
 
-We are not actively developing the repo but at least one Oliver Wyman team
-member can be reached at nicholas.padon@oliverwyman.
-com if you have questions
-or follow-ups.
-
-If you'd like to do incremental development, please fork the repo.
+We are not actively developing the repo - but GitHub issues can be raised
+if you have questions or follow-ups. If you'd like to do incremental development, please fork the repo and create
+a pull request from your feature branch into this repo.
 
 ## Install dependencies
 
@@ -32,7 +29,14 @@ in a version control provider.
 
 To run the tests on the command line: `pipenv run pytest`
 
+### Code coverage
+
+To run code coverage tests, run `pipenv run coverage run -m pytest`.
+
+To get a code coverage report, run `pipenv run coverage report` (after running the above
+coverage command)
+
 ## Documentation
 
-We envision generating the documentation with Sphinx
-and publishing online. Have not done that yet...
+Our documentation is published automatically via a GitHub
+hook into [ReadTheDocs](https://ireiat.readthedocs.io/en/latest/).
