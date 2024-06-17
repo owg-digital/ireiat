@@ -1,13 +1,22 @@
 import dagster
 import pandas as pd
 
-from ireiat.config import HIGHWAY_BETA, HIGHWAY_ALPHA, HIGHWAY_CAPACITY_TONS
+from ireiat.config import (
+    HIGHWAY_BETA,
+    HIGHWAY_ALPHA,
+    HIGHWAY_CAPACITY_TONS,
+    INTERMEDIATE_DIRECTORY_ARGS,
+)
 from ireiat.data_pipeline.metadata import publish_metadata
 
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", "write_kwargs": dagster.MetadataValue.json({"index": False})},
+    metadata={
+        "format": "parquet",
+        "write_kwargs": dagster.MetadataValue.json({"index": False}),
+        **INTERMEDIATE_DIRECTORY_ARGS,
+    },
 )
 def tap_network_dataframe(
     context: dagster.AssetExecutionContext, highway_network_dataframe: pd.DataFrame

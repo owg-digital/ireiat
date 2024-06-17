@@ -1,4 +1,5 @@
 import tempfile
+from functools import partial
 from pathlib import Path
 from typing import Optional, Mapping, Callable
 from zipfile import ZipFile
@@ -17,7 +18,7 @@ def _get_read_function(format: str, metadata: dict = None) -> Callable:
     format_mapping = {
         "csv": pd.read_csv,
         "parquet": pd.read_parquet,
-        "zip": pyogrio.read_dataframe,
+        "zip": partial(pyogrio.read_dataframe, use_arrow=True),
         "txt": pd.read_table,
         "xlsx": pd.read_excel,
     }
@@ -84,6 +85,7 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
         """This saves the dataframe according to the format implemented in FileSerializationResolver."""
 
         fpath = _get_fs_path(context.asset_key, context.metadata)
+        Path(fpath).parent.mkdir(exist_ok=True)
 
         write_kwargs: Optional[dagster.JsonMetadataValue] = context.metadata.get("write_kwargs")
         parsed_write_kwargs: dict = write_kwargs.data if write_kwargs else dict()

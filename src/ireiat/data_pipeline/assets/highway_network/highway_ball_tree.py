@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.neighbors import BallTree
 
 
-@dagster.asset(io_manager_key="default_io_manager")
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def highway_ball_tree(
     strongly_connected_highway_graph: ig.Graph,
     complete_highway_idx_to_node: Dict[int, Tuple[float, float]],

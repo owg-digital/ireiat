@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 
 from ireiat import r_source
-from ireiat.config import CACHE_PATH
+from ireiat.config import CACHE_PATH, INTERMEDIATE_PATH
 from ireiat.postprocessing.postprocessor import PostProcessor
 from ireiat.util.logging_ import configure_logging
 
@@ -27,10 +27,13 @@ def cli(debug):
     "--network-file",
     "-n",
     type=click.Path(exists=True),
-    default=CACHE_PATH / "tap_network_dataframe.parquet",
+    default=CACHE_PATH / INTERMEDIATE_PATH / "tap_network_dataframe.parquet",
 )
 @click.option(
-    "--od-file", "-d", type=click.Path(exists=True), default=CACHE_PATH / "tap_highway_tons.parquet"
+    "--od-file",
+    "-d",
+    type=click.Path(exists=True),
+    default=CACHE_PATH / INTERMEDIATE_PATH / "tap_highway_tons.parquet",
 )
 @click.option("--max-gap", "-g", type=float, default=1e-8)
 def solve(network_file: Path, od_file: Path, max_gap: float):
@@ -64,7 +67,7 @@ def dagster():
     "--solution-graph",
     "-g",
     type=click.Path(exists=True),
-    default=CACHE_PATH / "strongly_connected_highway_graph",
+    default=CACHE_PATH / INTERMEDIATE_PATH / "strongly_connected_highway_graph",
 )
 @click.option(
     "--network-shp",

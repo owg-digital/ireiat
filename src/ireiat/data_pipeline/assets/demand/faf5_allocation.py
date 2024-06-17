@@ -8,7 +8,8 @@ from ireiat.config import SUM_TONS_TOLERANCE
 
 
 @dagster.asset(
-    io_manager_key="default_io_manager", description="(State FIPS, County FIPS) -> Metric"
+    io_manager_key="default_io_manager_intermediate_path",
+    description="(State FIPS, County FIPS) -> Metric",
 )
 def actual_state_county_to_metric_map(
     us_census_county_population_src: pd.DataFrame,
@@ -24,7 +25,7 @@ def actual_state_county_to_metric_map(
 
 
 @dagster.asset(
-    io_manager_key="default_io_manager",
+    io_manager_key="default_io_manager_intermediate_path",
     description="FAF -> (State FIPS, County FIPS) -> % allocation",
 )
 def faf_id_to_county_id_allocation_map(

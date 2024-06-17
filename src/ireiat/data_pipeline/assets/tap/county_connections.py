@@ -8,7 +8,7 @@ from sklearn.neighbors import BallTree
 from ireiat.config import EXCLUDED_FIPS_CODES_MAP, LATLONG_CRS, ALBERS_CRS, RADIUS_EARTH_MILES
 
 
-@dagster.asset(io_manager_key="default_io_manager")
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def county_fips_to_highway_network_node_idx(
     context: dagster.AssetExecutionContext,
     us_county_shp_files_src: geopandas.GeoDataFrame,

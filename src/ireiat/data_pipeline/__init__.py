@@ -4,7 +4,7 @@ import dagster
 
 from .assets import demand, highway_network, tap
 from .io_manager import TabularDataLocalIOManager
-from ..config import CACHE_PATH
+from ..config import CACHE_PATH, INTERMEDIATE_PATH
 
 
 def _filter_for_non_source_assets(assets: Sequence) -> Sequence:
@@ -38,11 +38,15 @@ all_assets_job = dagster.define_asset_job(
     name="all", selection=_filter_for_non_source_assets(all_assets)
 )
 
+intermediate_path = str(CACHE_PATH / INTERMEDIATE_PATH)
 defs = dagster.Definitions(
     assets=all_assets,
     jobs=[demand_assets_job, highway_network_assets_job, tap_assets_job, all_assets_job],
     resources={
         "default_io_manager": dagster.FilesystemIOManager(base_dir=str(CACHE_PATH)),
+        "default_io_manager_intermediate_path": dagster.FilesystemIOManager(
+            base_dir=intermediate_path
+        ),
         "custom_io_manager": TabularDataLocalIOManager(),
     },
 )

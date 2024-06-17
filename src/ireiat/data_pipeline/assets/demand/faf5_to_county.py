@@ -7,7 +7,7 @@ import geopandas
 import numpy as np
 
 
-@dagster.asset(io_manager_key="default_io_manager")
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def faf_id_to_county_areas(
     context: dagster.AssetExecutionContext,
     faf5_regions_src: geopandas.GeoDataFrame,

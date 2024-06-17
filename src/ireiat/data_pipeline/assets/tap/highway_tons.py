@@ -3,11 +3,14 @@ from typing import Dict, Tuple
 import dagster
 import pandas as pd
 
-from ireiat.config import EXCLUDED_FIPS_CODES_MAP
+from ireiat.config import EXCLUDED_FIPS_CODES_MAP, INTERMEDIATE_DIRECTORY_ARGS
 from ireiat.data_pipeline.metadata import publish_metadata
 
 
-@dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
 def in_network_highway_tons(
     context: dagster.AssetExecutionContext, county_to_county_highway_tons: pd.DataFrame
 ) -> pd.DataFrame:
@@ -52,7 +55,13 @@ def in_network_highway_tons(
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", "write_kwargs": dagster.MetadataValue.json({"index": False})},
+    metadata={
+        "format": "parquet",
+        "write_kwargs": dagster.MetadataValue.json(
+            {"index": False},
+        ),
+        **INTERMEDIATE_DIRECTORY_ARGS,
+    },
 )
 def tap_highway_tons(
     context: dagster.AssetExecutionContext,

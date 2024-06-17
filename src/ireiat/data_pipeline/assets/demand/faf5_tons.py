@@ -4,19 +4,36 @@ from typing import Dict, Tuple
 import dagster
 import pandas as pd
 
-from ireiat.config import SUM_TONS_TOLERANCE, FAF_TONS_TARGET_FIELD
+from ireiat.config import (
+    SUM_TONS_TOLERANCE,
+    FAF_TONS_TARGET_FIELD,
+    NON_CONTAINERIZABLE_COMMODITIES,
+    INTERMEDIATE_DIRECTORY_ARGS,
+)
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.faf_constants import FAFMode
 
 
-@dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
 def faf5_truck_demand(
     context: dagster.AssetExecutionContext, faf5_demand_src: pd.DataFrame
 ) -> pd.DataFrame:
-    """FAF5 demand by truck"""
+    """FAF5 containerizable demand using the truck mode. Currently, FAF containerizable demand
+    is limited by commodity. Placeholder filter but is
+    meant to demonstrate how we can limit raw FAF data to intermodal-specific transits.
+    TODO (NP) - Determine a more robust methodology to filter containerizable demand"""
 
-    is_by_truck = faf5_demand_src["dms_mode"] == FAFMode.TRUCK  # by truck
-    faf_truck_pdf = faf5_demand_src.loc[is_by_truck]
+    # filter for containerizable
+    is_containerizable = ~faf5_demand_src["sctg2"].isin(NON_CONTAINERIZABLE_COMMODITIES)
+    faf_containerizable_pdf = faf5_demand_src.loc[is_containerizable]
+
+    # filter for truck mode
+    is_by_truck = faf_containerizable_pdf["dms_mode"] == FAFMode.TRUCK
+    faf_truck_pdf = faf_containerizable_pdf.loc[is_by_truck]
+
     total_road_tons_od_pdf = faf_truck_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
         [FAF_TONS_TARGET_FIELD]
     ].sum()
@@ -24,7 +41,10 @@ def faf5_truck_demand(
     return total_road_tons_od_pdf
 
 
-@dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
 def county_to_county_highway_tons(
     context: dagster.AssetExecutionContext,
     faf5_truck_demand: pd.DataFrame,

@@ -8,11 +8,14 @@ import igraph as ig
 import numpy as np
 import pandas as pd
 
-from ireiat.config import LATLONG_CRS
+from ireiat.config import LATLONG_CRS, INTERMEDIATE_DIRECTORY_ARGS
 from ireiat.data_pipeline.metadata import publish_metadata
 
 
-@dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
 def undirected_highway_edges(
     context: dagster.AssetExecutionContext, faf5_highway_network_links: geopandas.GeoDataFrame
 ) -> pd.DataFrame:
@@ -43,7 +46,7 @@ def undirected_highway_edges(
     return coords
 
 
-@dagster.asset(io_manager_key="default_io_manager")
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def complete_highway_node_to_idx(undirected_highway_edges: pd.DataFrame):
     """Generate unique nodes->indices based on the entire highway network"""
     unfiltered_node_idx_dict: Dict[Tuple[float, float], int] = dict()
@@ -62,13 +65,13 @@ def complete_highway_node_to_idx(undirected_highway_edges: pd.DataFrame):
     return unfiltered_node_idx_dict
 
 
-@dagster.asset(io_manager_key="default_io_manager")
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def complete_highway_idx_to_node(complete_highway_node_to_idx):
     """Generates unique indices->nodes based on the entire highway network"""
     return {v: k for k, v in complete_highway_node_to_idx.items()}
 
 
-@dagster.asset(io_manager_key="default_io_manager")
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def strongly_connected_highway_graph(
     context: dagster.AssetExecutionContext,
     undirected_highway_edges: pd.DataFrame,
@@ -139,7 +142,10 @@ def strongly_connected_highway_graph(
     return connected_subgraph
 
 
-@dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
 def highway_network_dataframe(
     context: dagster.AssetExecutionContext, strongly_connected_highway_graph: ig.Graph
 ) -> pd.DataFrame:

@@ -65,7 +65,7 @@ faf5_demand_src = dagster.SourceAsset(
         "temp_unzip": True,
         "source_path": "raw/",
         "read_kwargs": dagster.MetadataValue.json(
-            {"dtype": {"dms_orig": "str", "dms_dest": "str"}}
+            {"dtype": {"dms_orig": "str", "dms_dest": "str", "sctg2": "str"}}
         ),
         "dashboard_url": dagster.MetadataValue.url(
             "https://faf.ornl.gov/faf5/data/download_files/FAF5.5.1.zip"
