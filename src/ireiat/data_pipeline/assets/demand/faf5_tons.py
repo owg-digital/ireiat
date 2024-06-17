@@ -4,10 +4,9 @@ from typing import Dict, Tuple
 import dagster
 import pandas as pd
 
-from ireiat.config import TOLERANCE
+from ireiat.config import SUM_TONS_TOLERANCE, FAF_TONS_TARGET_FIELD
 from ireiat.data_pipeline.metadata import publish_metadata
-
-TARGET_FIELD = "tons_2022"
+from ireiat.util.faf_constants import FAFMode
 
 
 @dagster.asset(io_manager_key="custom_io_manager", metadata={"format": "parquet"})
@@ -16,10 +15,10 @@ def faf5_truck_demand(
 ) -> pd.DataFrame:
     """FAF5 demand by truck"""
 
-    is_by_truck = faf5_demand_src["dms_mode"] == 1  # by truck
+    is_by_truck = faf5_demand_src["dms_mode"] == FAFMode.TRUCK  # by truck
     faf_truck_pdf = faf5_demand_src.loc[is_by_truck]
     total_road_tons_od_pdf = faf_truck_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
-        [TARGET_FIELD]
+        [FAF_TONS_TARGET_FIELD]
     ].sum()
     publish_metadata(context, total_road_tons_od_pdf)
     return total_road_tons_od_pdf
@@ -41,10 +40,13 @@ def county_to_county_highway_tons(
                 state_dest,
                 county_dest,
             ), pct_in_county_dest in constituent_dest_counties_map.items():
-                tons = getattr(row, TARGET_FIELD) * pct_in_county_orig * pct_in_county_dest
+                tons = getattr(row, FAF_TONS_TARGET_FIELD) * pct_in_county_orig * pct_in_county_dest
                 county_od[(state_orig, county_orig, state_dest, county_dest)] += tons
 
-    assert abs(faf5_truck_demand[TARGET_FIELD].sum() - sum(county_od.values())) < TOLERANCE
+    assert (
+        abs(faf5_truck_demand[FAF_TONS_TARGET_FIELD].sum() - sum(county_od.values()))
+        < SUM_TONS_TOLERANCE
+    )
 
     county_od_pdf = pd.DataFrame(
         [(*k, v) for k, v in county_od.items()],

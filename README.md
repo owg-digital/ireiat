@@ -19,12 +19,22 @@ infrastructure planners, to understand:
 
 The tool is meant to be a Python-based command line tool, so you should ensure
 that you have Python 3.11 installed on your machine, which
-can be downloaded [here](!https://www.python.org/downloads/release/python-3117/).
+can be downloaded [here](https://www.python.org/downloads/release/python-3117/).
 
-Once you have Python installed you should be able to install the package
+Additionally, you need to download R and install:
+* cppRouting
+* igraph
+* arrow
+
+Once you have Python and R installed you should be able to install the package
 with `pip install ireiat`. After which, you can just run `ireiat` from a command-line!
 
-Run `ireiat --help` for CLI options or see the [full documentation](!https://ireiat.readthedocs.io/en/latest/).
+Run `ireiat --help` for CLI options or see the [full documentation](https://ireiat.readthedocs.io/en/latest/).
+
+# Contributing
+
+Please see [how to contribute](CONTRIBUTING.md)
+
 # Acknowledgement
 
 The information, data, or work presented herein was funded in part by the Advanced Research Projects Agency-Energy

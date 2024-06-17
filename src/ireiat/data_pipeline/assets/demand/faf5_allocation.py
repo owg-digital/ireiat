@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 import dagster
 import pandas as pd
 
-from ireiat.config import TOLERANCE
+from ireiat.config import SUM_TONS_TOLERANCE
 
 
 @dagster.asset(
@@ -60,7 +60,7 @@ def faf_id_to_county_id_allocation_map(
     # confirm that all the faf ids have a "total" allocation that sums to 1 (within some tolerance)
     assert all(
         [
-            abs(sum(metric_map.values()) - 1) < TOLERANCE
+            abs(sum(metric_map.values()) - 1) < SUM_TONS_TOLERANCE
             for metric_map in faf_id_to_county_percent_map.values()
         ]
     )
