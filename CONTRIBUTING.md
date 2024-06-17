@@ -1,9 +1,7 @@
 # Contributing
 
-We are not actively developing the repo GitHub issues can be raised
-if you have questions or follow-ups.
-
-If you'd like to do incremental development, please fork the repo and create
+We are not actively developing the repo - but GitHub issues can be raised
+if you have questions or follow-ups. If you'd like to do incremental development, please fork the repo and create
 a pull request from your feature branch into this repo.
 
 ## Install dependencies
