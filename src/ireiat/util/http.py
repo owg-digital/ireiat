@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def download_uncached_file(url: str, save_path: Path | str, force: bool = False) -> bool:
     """Simple download helper to stream the contents of `url` to `save_path`.
     If `save_path` does not exist (including parent directories) on the filesystem, it will be created.
-    If it does exist AND a sentinel file indicating completeness exists, then it will be read from the f
+
     After downloading, this method creates a "{save_path}.sentinel" file to indicate that the
     download was complete. If the sentinel file is not present, the download is assumed
     to have been partial and the file is re-downloaded.
