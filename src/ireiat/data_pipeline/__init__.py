@@ -2,7 +2,7 @@ from collections.abc import Sequence
 
 import dagster
 
-from .assets import demand, highway_network, tap
+from .assets import demand, highway_network, tap, rail_network
 from .io_manager import TabularDataLocalIOManager
 from ..config import CACHE_PATH, INTERMEDIATE_PATH
 
@@ -26,6 +26,14 @@ highway_network_assets_job = dagster.define_asset_job(
     name="highway_network_job", selection=_filter_for_non_source_assets(highway_network_assets)
 )
 
+# rail network
+rail_network_assets = dagster.load_assets_from_package_module(
+    rail_network, group_name="rail_network"
+)
+# rail_network_assets_job = dagster.define_asset_job(
+#     name="rail_network_job", selection=_filter_for_non_source_assets(rail_network_assets)
+# )
+
 # tap assets
 tap_assets = dagster.load_assets_from_package_module(tap, group_name="tap")
 tap_assets_job = dagster.define_asset_job(
@@ -33,7 +41,7 @@ tap_assets_job = dagster.define_asset_job(
 )
 
 # all assets
-all_assets = [*demand_assets, *highway_network_assets, *tap_assets]
+all_assets = [*demand_assets, *highway_network_assets, *rail_network_assets, *tap_assets]
 all_assets_job = dagster.define_asset_job(
     name="all", selection=_filter_for_non_source_assets(all_assets)
 )

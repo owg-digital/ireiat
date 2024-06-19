@@ -1,15 +1,17 @@
-from collections import Counter
-from itertools import chain
 from typing import Dict, Tuple
 
 import dagster
 import geopandas
 import igraph as ig
-import numpy as np
 import pandas as pd
 
-from ireiat.config import LATLONG_CRS, INTERMEDIATE_DIRECTORY_ARGS
+from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS
 from ireiat.data_pipeline.metadata import publish_metadata
+from ireiat.util.graph import (
+    get_coordinates_from_geoframe,
+    generate_zero_based_node_maps,
+    get_allowed_node_indices,
+)
 
 
 @dagster.asset(
@@ -22,23 +24,7 @@ def undirected_highway_edges(
     """For each undirected edge in the highway dataset, create a row in the table with origin_lat, origin_long,
     destination_lat, and destination_long, along with several other edge fields of interest"""
 
-    # convert to CRS suitable for extracting lat/long
-    faf5_highway_network_links = faf5_highway_network_links.to_crs(LATLONG_CRS)
-    coords = (
-        faf5_highway_network_links.geometry.get_coordinates()
-        .reset_index()
-        .groupby("index")
-        .agg({"x": ["first", "last"], "y": ["first", "last"]})
-    )
-    coords = coords.droplevel(0, axis=1)
-    coords.columns = [
-        "origin_longitude",
-        "destination_longitude",
-        "origin_latitude",
-        "destination_latitude",
-    ]
-    coords = np.round(coords, 6)  # round to 6 decimal places of lat long
-    assert len(coords) == len(faf5_highway_network_links)
+    coords = get_coordinates_from_geoframe(faf5_highway_network_links)
     coords = pd.concat(
         [faf5_highway_network_links[["id", "dir", "length", "ab_finalsp"]], coords], axis=1
     )  # join in several fields of interest
@@ -49,20 +35,7 @@ def undirected_highway_edges(
 @dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def complete_highway_node_to_idx(undirected_highway_edges: pd.DataFrame):
     """Generate unique nodes->indices based on the entire highway network"""
-    unfiltered_node_idx_dict: Dict[Tuple[float, float], int] = dict()
-    unfiltered_node_idx_counter = 0
-
-    for row in undirected_highway_edges.itertuples():
-        origin_coords = (row.origin_latitude, row.origin_longitude)
-        destination_coords = (row.destination_latitude, row.destination_longitude)
-        if origin_coords not in unfiltered_node_idx_dict:
-            unfiltered_node_idx_dict[origin_coords] = unfiltered_node_idx_counter
-            unfiltered_node_idx_counter += 1
-        if destination_coords not in unfiltered_node_idx_dict:
-            unfiltered_node_idx_dict[destination_coords] = unfiltered_node_idx_counter
-            unfiltered_node_idx_counter += 1
-
-    return unfiltered_node_idx_dict
+    return generate_zero_based_node_maps(undirected_highway_edges)
 
 
 @dagster.asset(io_manager_key="default_io_manager_intermediate_path")
@@ -119,23 +92,7 @@ def strongly_connected_highway_graph(
         directed=True,
     )
     context.log.info(f"Initial constructed graph connected?: {g.is_connected()}")
-
-    # filter for the largest connected component (we are basically throwing away the weakly connected nodes)
-    connected_component_length = Counter([len(f) for f in g.connected_components()])
-    biggest_connected_component = max(connected_component_length)
-
-    context.log.info(f"Number of nodes in largest connected component {connected_component_length}")
-    count_of_excluded_nodes = sum(
-        [k * v for k, v in connected_component_length.items() if k != biggest_connected_component]
-    )
-    context.log.info(
-        f"Excluded # of nodes that are not strongly connected {count_of_excluded_nodes}"
-    )
-    allowed_node_indices = list(
-        chain.from_iterable(
-            [x for x in g.connected_components() if len(x) == biggest_connected_component]
-        )
-    )
+    allowed_node_indices = get_allowed_node_indices(g)
 
     # construct a connected subgraph
     connected_subgraph = g.subgraph(allowed_node_indices)
