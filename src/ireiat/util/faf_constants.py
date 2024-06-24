@@ -15,7 +15,7 @@ class FAFMode(IntEnum):
 
 
 class FAFCommodity(StrEnum):
-    """FAF transit mode. See https://www.bts.gov/sites/bts.dot.gov/files/2021-02/FAF5-User-Guide.pdf"""
+    """FAF SCTG2 codes. See https://www.bts.gov/sites/bts.dot.gov/files/2021-02/FAF5-User-Guide.pdf"""
 
     LIVE_ANIMALS_FISH = "01"
     CEREAL_GRAINS = "02"
