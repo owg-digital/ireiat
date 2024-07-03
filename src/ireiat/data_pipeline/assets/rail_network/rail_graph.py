@@ -16,7 +16,7 @@ def undirected_rail_edges(
 ) -> pd.DataFrame:
     """For each undirected edge in the rail dataset, create a row in the table with origin_lat, origin_long,
     destination_lat, and destination_long, along with several other edge fields of interest"""
-
+    narn_rail_network_links.columns = [c.lower() for c in narn_rail_network_links.columns]
     link_coords = get_coordinates_from_geoframe(narn_rail_network_links)
     link_coords = pd.concat(
         [narn_rail_network_links[["miles", "frfranode", "tofranode"]], link_coords], axis=1
