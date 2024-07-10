@@ -56,7 +56,7 @@ def solve(network_file: Path, od_file: Path, max_gap: float):
 def dagster():
     """Runs the dagster web server to run data pipeline transformations"""
     logger.info("Running dagster webserver.")
-    subprocess.run("dagster dev")
+    subprocess.run(["dagster", "dev"])
 
 
 @cli.command()
