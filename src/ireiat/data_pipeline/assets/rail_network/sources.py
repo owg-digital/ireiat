@@ -17,3 +17,19 @@ narn_links_src = dagster.SourceAsset(
         ),
     },
 )
+
+intermodal_terminals_src = dagster.SourceAsset(
+    key=dagster.AssetKey("intermodal_terminals"),
+    observe_fn=observation_function,
+    description="CSV containing intermodal terminal information, including mapping to corresponding rail network nodes.",
+    io_manager_key="custom_io_manager",
+    metadata={
+        "format": "csv",
+        "filename": "im_terminals.csv",
+        "source_path": "raw/",
+        "dashboard_url": dagster.MetadataValue.url(
+            "https://raw.githubusercontent.com/owg-digital/ireiat/hd-rail-network/data/im_terminals.csv"
+        ),
+    },
+)
+
