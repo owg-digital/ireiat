@@ -56,26 +56,26 @@ def narn_links_preprocessing(links_df: pd.DataFrame) -> pd.DataFrame:
 
     # Create OWNERS column
     links_df["OWNERS"] = links_df[rrowner_cols].apply(
-        lambda x: frozenset(filter(pd.notna, x)), axis=1
+        lambda x: set(filter(pd.notna, x)), axis=1
     )
 
     # Add CSXT and NS to OWNERS if PAS is one of the owners
-    def add_csxt_ns(owners: frozenset[str]) -> frozenset[str]:
+    def add_csxt_ns(owners: set[str]) -> set[str]:
         owners_set = set(owners)
         if "PAS" in owners_set:
             owners_set.update(["CSXT", "NS"])
-        return frozenset(owners_set)
+        return set(owners_set)
 
     links_df["OWNERS"] = links_df["OWNERS"].apply(add_csxt_ns)
 
     # Create TRKRIGHTS column
     links_df["TRKRIGHTS"] = links_df[trkrghts_cols].apply(
-        lambda x: frozenset(filter(pd.notna, x)), axis=1
+        lambda x: set(filter(pd.notna, x)), axis=1
     )
 
     # Function to exclude 'AMTK' from a set
-    def exclude_amtk(railroads: frozenset[str]) -> frozenset[str]:
-        return frozenset(r for r in railroads if r != "AMTK")
+    def exclude_amtk(railroads: set[str]) -> set[str]:
+        return set(r for r in railroads if r != "AMTK")
 
     # Create RAILROADS column
     links_df["RAILROADS"] = links_df.apply(
@@ -127,13 +127,13 @@ def intermodal_terminals_preprocessing(terminals_df: pd.DataFrame) -> pd.DataFra
     terminals_df["FRANODEID"] = terminals_df["FRANODEID"].astype(int)
     terminals_df["CLOSEST_FRANODEID"] = terminals_df["CLOSEST_FRANODEID"].astype(int)
 
-    # Split railroads_to_match into frozensets and strip whitespaces
-    def clean_railroads(railroads: str) -> frozenset[str]:
+    # Split railroads_to_match into sets and strip whitespaces
+    def clean_railroads(railroads: str) -> set[str]:
         if pd.isna(railroads):
-            return frozenset()
+            return set()
         # Handle both comma-separated and set-like strings
         railroads = railroads.strip("{}")
-        return frozenset(r.strip().strip("'") for r in railroads.split(","))
+        return set(r.strip().strip("'") for r in railroads.split(","))
 
     terminals_df.loc[:, "FRA_RRS_TO_MATCH"] = terminals_df["FRA_RRS_TO_MATCH"].apply(
         clean_railroads
