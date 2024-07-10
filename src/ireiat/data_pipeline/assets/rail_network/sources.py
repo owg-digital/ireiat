@@ -13,7 +13,7 @@ narn_links_src = dagster.SourceAsset(
         "filename": "narn_rail_links.zip",
         "source_path": "raw/",
         "dashboard_url": dagster.MetadataValue.url(
-            "https://stg-arcgisazurecdataprod.az.arcgis.com/exportfiles-273-8581/NTAD_North_American_Rail_Network_Lines_4887242439196784421.zip?sv=2018-03-28&sr=b&sig=D2nErdxtbtfHwa7pcy9dTe6iuiZ46IsKIp7Z%2FisnzGs%3D&se=2024-07-03T14%3A07%3A01Z&sp=r"
+            "https://stg-arcgisazurecdataprod.az.arcgis.com/exportfiles-273-8581/NTAD_North_American_Rail_Network_Lines_4887242439196784421.zip?sv=2018-03-28&sr=b&sig=jRmQ9mKX3nBDsW47G9ZD9JVNAO15qqtzsFQ%2B3LcZmuA%3D&se=2024-07-10T21%3A34%3A03Z&sp=r"
         ),
     },
 )
