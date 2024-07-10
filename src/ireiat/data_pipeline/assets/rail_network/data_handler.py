@@ -1,7 +1,8 @@
+import geopandas
 import pandas as pd
 
 
-def narn_links_preprocessing(links_df: pd.DataFrame) -> pd.DataFrame:
+def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
     """
     Preprocess the NARN links dataframes.
 
@@ -17,10 +18,10 @@ def narn_links_preprocessing(links_df: pd.DataFrame) -> pd.DataFrame:
     9. Rename specific columns for clarity.
 
     Parameters:
-    links_df (pd.DataFrame): DataFrame containing link data.
+    links_df (geopandas.GeoDataFrame): DataFrame containing link data.
 
     Returns:
-    pd.DataFrame: Preprocessed links dataframe with renamed columns.
+    geopandas.GeoDataFrame: Preprocessed links dataframe with renamed columns.
     """
     # Drop rows with missing values in 'FRAARCID', 'FRFRANODE', and 'TOFRANODE'
     links_df = links_df.dropna(subset=["FRAARCID", "FRFRANODE", "TOFRANODE"])

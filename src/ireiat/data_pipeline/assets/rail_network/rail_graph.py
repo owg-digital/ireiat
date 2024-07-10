@@ -41,7 +41,7 @@ def complete_rail_idx_to_node(complete_rail_node_to_idx):
     io_manager_key="custom_io_manager",
     metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
 )
-def rail_network_links(context: dagster.AssetExecutionContext, narn_rail_network_links: geopandas.GeoDataFrame) -> pd.DataFrame:
+def rail_network_links(context: dagster.AssetExecutionContext, narn_rail_network_links: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
     """Preprocess the rail links data"""
     processed_links = data_handler.narn_links_preprocessing(narn_rail_network_links)
     context.log.info(f"Rail links data loaded and preprocessed with {processed_links.shape[0]} rail links")
