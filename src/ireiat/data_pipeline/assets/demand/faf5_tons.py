@@ -22,9 +22,7 @@ def faf5_truck_demand(
     context: dagster.AssetExecutionContext, faf5_demand_src: pd.DataFrame
 ) -> pd.DataFrame:
     """FAF5 containerizable demand using the truck mode. Currently, FAF containerizable demand
-    is limited by commodity. Placeholder filter but is
-    meant to demonstrate how we can limit raw FAF data to intermodal-specific transits.
-    TODO (NP) - Determine a more robust methodology to filter containerizable demand"""
+    is limited by commodity. Based on OW knowledge of containerizable commodities"""
 
     # filter for containerizable
     is_containerizable = ~faf5_demand_src["sctg2"].isin(NON_CONTAINERIZABLE_COMMODITIES)
