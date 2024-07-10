@@ -23,8 +23,6 @@ def rail_network_links(context: dagster.AssetExecutionContext, narn_rail_network
 )
 def rail_network_terminals(context: dagster.AssetExecutionContext, intermodal_terminals: pd.DataFrame) -> pd.DataFrame:
     """Preprocess the intermodal terminals data"""
-    context.log.info(intermodal_terminals.shape)
-    print(intermodal_terminals.shape)
     processed_terminals = data_handler.intermodal_terminals_preprocessing(intermodal_terminals)
-    context.log.info(f"Intermodal terminals data loaded and preprocessed with {processed_terminals.shape[0]} intermodal terminals")
+    context.log.info(f"Intermodal terminals data loaded and preprocessed with {processed_terminals.shape[0]} terminals")
     return processed_terminals

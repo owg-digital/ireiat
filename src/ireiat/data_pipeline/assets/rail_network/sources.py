@@ -28,7 +28,7 @@ intermodal_terminals_src = dagster.SourceAsset(
         "filename": "im_terminals.csv",
         "source_path": "raw/",
         "dashboard_url": dagster.MetadataValue.url(
-            "https://raw.githubusercontent.com/owg-digital/ireiat/hd-rail-network/data/im_terminals.csv"
+            "https://raw.githubusercontent.com/owg-digital/ireiat/master/data/rail_network/im_terminals.csv"
         ),
     },
 )
