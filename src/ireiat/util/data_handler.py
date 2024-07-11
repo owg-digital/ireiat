@@ -13,7 +13,7 @@ def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoD
     4. Remove links that are abandoned or removed.
     5. Remove links that have AMTK as the sole owner with no other owner and no trackage rights.
     6. Create 'OWNERS' and 'TRKRIGHTS' columns from non-null values of respective columns.
-    7. Add CSXT and NS to 'OWNERS' if PAS is one of the owners.
+    7. Add CSXT and NS to 'OWNERS' if PAS is one of the owners, since PAS is jointly owned by CSXT and NS.
     8. Create 'RAILROADS' column containing unique railroads from 'OWNERS' and 'TRKRIGHTS' (excluding AMTK).
     9. Rename specific columns for clarity.
 
@@ -60,7 +60,7 @@ def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoD
         lambda x: set(filter(pd.notna, x)), axis=1
     )
 
-    # Add CSXT and NS to OWNERS if PAS is one of the owners
+    # Add CSXT and NS to OWNERS if PAS is one of the owners (PAS is jointly owned by CSXT and NS)
     def add_csxt_ns(owners: set[str]) -> set[str]:
         owners_set = set(owners)
         if "PAS" in owners_set:

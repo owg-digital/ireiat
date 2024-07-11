@@ -6,7 +6,7 @@ from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import get_coordinates_from_geoframe, generate_zero_based_node_maps
 
-import ireiat.data_pipeline.assets.rail_network.data_handler as data_handler
+import ireiat.util.data_handler as data_handler
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
@@ -45,6 +45,7 @@ def rail_network_links(context: dagster.AssetExecutionContext, narn_rail_network
     """Preprocess the rail links data"""
     processed_links = data_handler.narn_links_preprocessing(narn_rail_network_links)
     context.log.info(f"Rail links data loaded and preprocessed with {processed_links.shape[0]} rail links")
+    publish_metadata(context, processed_links)
     return processed_links
 
 @dagster.asset(
@@ -55,4 +56,5 @@ def rail_network_terminals(context: dagster.AssetExecutionContext, intermodal_te
     """Preprocess the intermodal terminals data"""
     processed_terminals = data_handler.intermodal_terminals_preprocessing(intermodal_terminals)
     context.log.info(f"Intermodal terminals data loaded and preprocessed with {processed_terminals.shape[0]} terminals")
+    publish_metadata(context, processed_terminals)
     return processed_terminals
