@@ -7,6 +7,7 @@ from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import get_coordinates_from_geoframe, generate_zero_based_node_maps
 
 import ireiat.util.data_handler as data_handler
+from ireiat.util.data_structures import RailNetwork
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
@@ -58,3 +59,19 @@ def rail_network_terminals(context: dagster.AssetExecutionContext, intermodal_te
     context.log.info(f"Intermodal terminals data loaded and preprocessed with {processed_terminals.shape[0]} terminals")
     publish_metadata(context, processed_terminals)
     return processed_terminals
+
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "pickle", **INTERMEDIATE_DIRECTORY_ARGS},
+)
+def rail_network_object(
+    context: dagster.AssetExecutionContext,
+    rail_network_links: geopandas.GeoDataFrame,
+    rail_network_terminals: pd.DataFrame,
+) -> RailNetwork:
+    """Create and build the RailNetwork object"""
+    rail_network = RailNetwork()
+    rail_network.build_railroad_network(links_df=rail_network_links, terminals_df=rail_network_terminals)
+    context.log.info(f"Rail network object created: {rail_network}")
+    publish_metadata(context, rail_network)
+    return rail_network
