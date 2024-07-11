@@ -9,6 +9,7 @@ from ireiat.util.graph import get_coordinates_from_geoframe, generate_zero_based
 import ireiat.util.data_handler as data_handler
 from ireiat.util.data_structures import RailNetwork
 
+
 @dagster.asset(
     io_manager_key="custom_io_manager",
     metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
@@ -38,6 +39,7 @@ def complete_rail_idx_to_node(complete_rail_node_to_idx):
     """Generates unique indices->nodes based on the entire rail network"""
     return {v: k for k, v in complete_rail_node_to_idx.items()}
 
+
 @dagster.asset(
     io_manager_key="custom_io_manager",
     metadata={"format": "parquet", "use_geopandas": True, **INTERMEDIATE_DIRECTORY_ARGS},
@@ -48,6 +50,7 @@ def rail_network_links(context: dagster.AssetExecutionContext, narn_rail_network
     context.log.info(f"Rail links data loaded and preprocessed with {processed_links.shape[0]} rail links")
     publish_metadata(context, processed_links)
     return processed_links
+
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
