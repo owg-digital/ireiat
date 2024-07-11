@@ -17,7 +17,7 @@ def _get_read_function(format: str, metadata: dict = None) -> Callable:
     """Returns a function for file-reading based on the `format` and possibly `metadata`"""
     format_mapping = {
         "csv": pd.read_csv,
-        "parquet": pd.read_parquet,
+        "parquet": geopandas.read_parquet if metadata and metadata.get("use_geopandas", False) else pd.read_parquet,
         "zip": partial(pyogrio.read_dataframe, use_arrow=True),
         "txt": pd.read_table,
         "xlsx": pd.read_excel,
