@@ -7,15 +7,16 @@ def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoD
     Preprocess the NARN links dataframes.
 
     This function performs the following preprocessing steps:
-    1. Drop rows with missing values in 'FRAARCID', 'FRFRANODE', and 'TOFRANODE'.
-    2. Convert 'FRAARCID', 'FRFRANODE', and 'TOFRANODE' columns to integers.
-    3. Replace railroad owner and trackage rights codes according to a given mapping.
-    4. Remove links that are abandoned or removed.
-    5. Remove links that have AMTK as the sole owner with no other owner and no trackage rights.
-    6. Create 'OWNERS' and 'TRKRIGHTS' columns from non-null values of respective columns.
-    7. Add CSXT and NS to 'OWNERS' if PAS is one of the owners, since PAS is jointly owned by CSXT and NS.
-    8. Create 'RAILROADS' column containing unique railroads from 'OWNERS' and 'TRKRIGHTS' (excluding AMTK).
-    9. Rename specific columns for clarity.
+    1. Ensure that the CRS for lat/longs are equal to EPSG:4326.
+    2. Drop rows with missing values in 'FRAARCID', 'FRFRANODE', and 'TOFRANODE'.
+    3. Convert 'FRAARCID', 'FRFRANODE', and 'TOFRANODE' columns to integers.
+    4. Replace railroad owner and trackage rights codes according to a given mapping.
+    5. Remove links that are abandoned or removed.
+    6. Remove links that have AMTK as the sole owner with no other owner and no trackage rights.
+    7. Create 'OWNERS' and 'TRKRIGHTS' columns from non-null values of respective columns.
+    8. Add CSXT and NS to 'OWNERS' if PAS is one of the owners, since PAS is jointly owned by CSXT and NS.
+    9. Create 'RAILROADS' column containing unique railroads from 'OWNERS' and 'TRKRIGHTS' (excluding AMTK).
+    10. Rename specific columns for clarity.
 
     Parameters:
     links_df (geopandas.GeoDataFrame): DataFrame containing link data.
@@ -23,6 +24,9 @@ def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoD
     Returns:
     geopandas.GeoDataFrame: Preprocessed links dataframe with renamed columns.
     """
+    # Ensure that the CRS for lat/longs are equal to EPSG:4326
+    links_df = links_df.to_crs("EPSG:4326")
+    
     # Drop rows with missing values in 'FRAARCID', 'FRFRANODE', and 'TOFRANODE'
     links_df = links_df.dropna(subset=["FRAARCID", "FRFRANODE", "TOFRANODE"])
 
