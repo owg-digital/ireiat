@@ -247,4 +247,3 @@ class RailNetwork:
 
         # Add intermodal terminals
         self.add_intermodal_terminals(terminals_df=terminals_df)
-        print("Intermodal terminals added")
