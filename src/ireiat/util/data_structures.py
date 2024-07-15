@@ -145,7 +145,7 @@ class RailNetwork:
         """
         self.rail_nodes: dict[int, RailNode] = {}
         self.rail_links: dict[int, RailLink] = {}
-        self.intermodal_terminals: dict[int, IntermodalTerminal] = {}
+        self.intermodal_terminals: dict[tuple[str, int], IntermodalTerminal] = {}
 
     def __repr__(self) -> str:
         return (
