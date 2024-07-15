@@ -2,6 +2,7 @@ import geopandas
 import pandas as pd
 from shapely.geometry import LineString
 
+
 class RailNode:
     def __init__(
         self,
@@ -46,6 +47,27 @@ class RailNode:
         # Use copy to avoid mutating the original set
         self.link_railroads[link_id] = new_railroads.copy()
 
+
+class QuantNode:
+    def __init__(self, rail_node: RailNode, railroad: str):
+        """
+        Represents a QuantNode in the rail network, specific to a railroad.
+
+        Args:
+            rail_node (RailNode): An existing RailNode object to associate with.
+            railroad (str): Specific railroad for the QuantNode.
+        """
+        self.rail_node = rail_node
+        self.railroad = railroad
+        assert self.is_specific_railroad(), f"Railroad {railroad} is not part of the rail node's railroads."
+
+    def __repr__(self) -> str:
+        return f"QuantNode(node_id={self.rail_node.node_id}, railroad={self.railroad})"
+
+    def is_specific_railroad(self) -> bool:
+        return self.railroad in self.rail_node.railroads
+
+    
 class RailLink:
     def __init__(
         self,
@@ -103,6 +125,46 @@ class RailLink:
             f"RailLink(link_id={self.link_id}, from_node={self.from_node.node_id}, to_node={self.to_node.node_id}, "
             f"miles={self.miles}, owners={self.owners}, track_rights={self.track_rights}, railroads={self.railroads})"
         )
+
+
+class QuantLink:
+    def __init__(self, rail_link: RailLink, from_node: QuantNode, to_node: QuantNode, railroad: str):
+        """
+        Represents a QuantLink in the rail network, specific to a railroad.
+
+        Args:
+            rail_link (RailLink): An existing RailLink object to inherit from.
+            from_node (QuantNode): The originating QuantNode.
+            to_node (QuantNode): The destination QuantNode.
+            railroad (str): Specific railroad for the QuantLink.
+        """
+        self.rail_link = rail_link
+        self.from_node = from_node
+        self.to_node = to_node
+        self.railroad = railroad
+
+        assert self.is_specific_railroad(), (
+            f"Railroad {railroad} is not part of the rail link's railroads or does not match from/to nodes."
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"QuantLink(link_id={self.rail_link.link_id}, from_node={self.from_node.node_id}, "
+            f"to_node={self.to_node.node_id}, railroad={self.railroad})"
+        )
+
+    def is_specific_railroad(self) -> bool:
+        """
+        Check if the link is specific to the given railroad and if both nodes belong to the same railroad.
+
+        Returns:
+            bool: True if the link belongs to the specific railroad and both nodes belong to the same railroad, False otherwise.
+        """
+        return (
+            self.railroad in self.rail_link.railroads
+            and self.from_node.railroad == self.to_node.railroad == self.railroad
+        )
+
     
 class IntermodalTerminal:
     def __init__(
@@ -137,19 +199,23 @@ class IntermodalTerminal:
             f"IntermodalTerminal(id={self.id}, terminal_name='{self.terminal_name}', rail_node={self.rail_node}, "
             f"yard_name='{self.yard_name}', capacity={self.capacity})"
         )
-    
+
+
 class RailNetwork:
     def __init__(self):
         """
-        Represents a rail network consisting of rail nodes and rail links.
+        Represents a rail network consisting of various types of nodes and links.
         """
         self.rail_nodes: dict[int, RailNode] = {}
         self.rail_links: dict[int, RailLink] = {}
+        self.quant_nodes: dict[tuple[int, str], QuantNode] = {}
+        self.quant_links: dict[tuple[int, str], QuantLink] = {}
         self.intermodal_terminals: dict[tuple[str, int], IntermodalTerminal] = {}
 
     def __repr__(self) -> str:
         return (
             f"RailNetwork(nodes={len(self.rail_nodes)}, links={len(self.rail_links)}, "
+            f"quant_nodes={len(self.quant_nodes)}, quant_links={len(self.quant_links)}, "
             f"terminals={len(self.intermodal_terminals)})"
         )
 
@@ -208,6 +274,33 @@ class RailNetwork:
             )
             self.rail_links[link_id] = rail_link
 
+    def add_quant_nodes_and_links(self):
+        """
+        Adds quant nodes and quant links to the rail network.
+        """
+        # Create QuantNodes
+        for node_id, node in self.rail_nodes.items():
+            for railroad in node.railroads:
+                quant_node_key = (node_id, railroad)
+                self.quant_nodes[quant_node_key] = QuantNode(node, railroad)
+
+        # Create QuantLinks
+        for link_id, link in self.rail_links.items():
+            for railroad in link.railroads:
+                quant_from_node_key = (link.from_node.node_id, railroad)
+                quant_to_node_key = (link.to_node.node_id, railroad)
+
+                # Ensure both quant nodes exist
+                if quant_from_node_key in self.quant_nodes and quant_to_node_key in self.quant_nodes:
+                    quant_link_key = (link_id, railroad)
+                    quant_link = QuantLink(
+                        rail_link=link,
+                        from_node=self.quant_nodes[quant_from_node_key],
+                        to_node=self.quant_nodes[quant_to_node_key],
+                        railroad=railroad,
+                    )
+                    self.quant_links[quant_link_key] = quant_link
+
     def add_intermodal_terminals(self, terminals_df: pd.DataFrame):
         """
         Adds intermodal terminals to the network from a DataFrame.
@@ -244,6 +337,9 @@ class RailNetwork:
         """
         # Add rail nodes and links
         self.add_rail_nodes_and_links(links_df=links_df)
+
+        # Add quant nodes and links
+        self.add_quant_nodes_and_links()
 
         # Add intermodal terminals
         self.add_intermodal_terminals(terminals_df=terminals_df)
