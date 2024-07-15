@@ -1,6 +1,8 @@
 import geopandas
 import pandas as pd
 
+from ireiat.config import LATLONG_CRS
+
 
 def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
     """
@@ -25,7 +27,8 @@ def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoD
     geopandas.GeoDataFrame: Preprocessed links dataframe with renamed columns.
     """
     # Ensure that the CRS for lat/longs are equal to EPSG:4326
-    links_df = links_df.to_crs("EPSG:4326")
+    if links_df.crs != LATLONG_CRS:
+        links_df = links_df.to_crs(LATLONG_CRS)
     
     # Drop rows with missing values in 'FRAARCID', 'FRFRANODE', and 'TOFRANODE'
     links_df = links_df.dropna(subset=["FRAARCID", "FRFRANODE", "TOFRANODE"])
