@@ -73,3 +73,28 @@ def county_to_county_highway_tons(
     non_zero_county_od_pdf = county_od_pdf.loc[county_od_pdf["tons"] > 0].sort_values("tons")
     publish_metadata(context, non_zero_county_od_pdf)
     return non_zero_county_od_pdf
+
+
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
+def faf5_rail_demand(
+    context: dagster.AssetExecutionContext, faf5_demand_src: pd.DataFrame
+) -> pd.DataFrame:
+    """FAF5 containerizable demand using the rail mode. Currently, FAF containerizable demand
+    is limited by commodity. Based on OW knowledge of containerizable commodities"""
+
+    # filter for containerizable
+    is_containerizable = ~faf5_demand_src["sctg2"].isin(NON_CONTAINERIZABLE_COMMODITIES)
+    faf_containerizable_pdf = faf5_demand_src.loc[is_containerizable]
+
+    # filter for rail mode
+    is_by_rail = faf_containerizable_pdf["dms_mode"] == FAFMode.RAIL
+    faf_rail_pdf = faf_containerizable_pdf.loc[is_by_rail]
+
+    total_rail_tons_od_pdf = faf_rail_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
+        [FAF_TONS_TARGET_FIELD]
+    ].sum()
+    publish_metadata(context, total_rail_tons_od_pdf)
+    return total_rail_tons_od_pdf
