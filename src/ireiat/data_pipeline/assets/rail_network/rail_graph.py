@@ -7,6 +7,8 @@ from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import get_coordinates_from_geoframe, generate_zero_based_node_maps
 
 import ireiat.util.data_handler as data_handler
+from ireiat.util.data_structures import RailNetwork
+
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
@@ -37,9 +39,10 @@ def complete_rail_idx_to_node(complete_rail_node_to_idx):
     """Generates unique indices->nodes based on the entire rail network"""
     return {v: k for k, v in complete_rail_node_to_idx.items()}
 
+
 @dagster.asset(
     io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+    metadata={"format": "parquet", "use_geopandas": True, **INTERMEDIATE_DIRECTORY_ARGS},
 )
 def rail_network_links(context: dagster.AssetExecutionContext, narn_rail_network_links: geopandas.GeoDataFrame) -> geopandas.GeoDataFrame:
     """Preprocess the rail links data"""
@@ -47,6 +50,7 @@ def rail_network_links(context: dagster.AssetExecutionContext, narn_rail_network
     context.log.info(f"Rail links data loaded and preprocessed with {processed_links.shape[0]} rail links")
     publish_metadata(context, processed_links)
     return processed_links
+
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
@@ -58,3 +62,16 @@ def rail_network_terminals(context: dagster.AssetExecutionContext, intermodal_te
     context.log.info(f"Intermodal terminals data loaded and preprocessed with {processed_terminals.shape[0]} terminals")
     publish_metadata(context, processed_terminals)
     return processed_terminals
+
+
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
+def rail_network_object(
+    context: dagster.AssetExecutionContext,
+    rail_network_links: geopandas.GeoDataFrame,
+    rail_network_terminals: pd.DataFrame,
+) -> RailNetwork:
+    """Build the RailNetwork object"""
+    rail_network = RailNetwork()
+    rail_network.build_railroad_network(links_df=rail_network_links, terminals_df=rail_network_terminals)
+    context.log.info(f"Rail network object created: {rail_network}")
+    return rail_network
