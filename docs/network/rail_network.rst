@@ -20,3 +20,9 @@ and join the subgraphs with "impedance" edges that represent interchange
 "costs."
 
 ..  image:: ../_static/network/rail/impedance_example.png
+
+These are accomplished through:
+
+.. automodule:: ireiat.data_pipeline.assets.rail_network.impedance
+    :members:
+    :private-members:

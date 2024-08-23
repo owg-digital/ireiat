@@ -5,7 +5,8 @@ import igraph as ig
 
 
 def _generate_subgraphs(g: ig.Graph, separation_attribute: str = "owner") -> Dict[str, ig.Graph]:
-    """Returns subgraphs by unique entries in the `separation_attribute`  for the graph.
+    """
+    Returns subgraphs by unique entries in the `separation_attribute`  for the graph.
     Returned subgraphs have an 'original_idx' field with the format {X}{Y}, where X is the
     `separation_attribute` string and Y is the original vertex index.
     E.g. 0->1 (Graph A) would have ['A0','A1'] vertex attributes
@@ -37,12 +38,13 @@ def _generate_impedances(g: ig.Graph, separation_attribute="owner") -> Set[Tuple
     Given a graph with a `impedance_attribute` on each edge, determine the impedance
     edges that would be needed to join subgraphs that were created from unique values of the
     impedance attribute. For example, if a graph of 0 -> 1 -> 2 had 'owners' 'A' on the first
-     edge and 'B' on the second edge, this method would return `{('A1','B1')}` given that a
-     graph split by owner would be A graph: 0->1 and B graph: 1->2 and there would be an
-     impedance edge between 'A1' and 'B1'.
-     :param g: graph to generate impedance edges from
-     :param separation_attribute: string identifer on the graph edges
-     :return: Set of tuples of impedance graph edges
+    edge and 'B' on the second edge, this method would return `{('A1','B1')}` given that a
+    graph split by owner would be A graph: 0->1 and B graph: 1->2 and there would be an
+    impedance edge between 'A1' and 'B1'.
+
+    :param g: graph to generate impedance edges from
+    :param separation_attribute: string identifer on the graph edges
+    :return: Set of tuples of impedance graph edges
     """
     impedances = set()
     for v in g.vs:
@@ -79,6 +81,7 @@ def _lookup_disjoint_graph_vertices(
 ) -> Tuple[int, int]:
     """For a given impedance, specified by {owner}{vertex}, e.g. A1 -> B1, look up the vertices in the disjoint
     graph and return a tuple of vertex indices.
+
     :param disjoint_graph: graph representing the disjoint union of subgraphs separated by an attribute
     :param impedance: Tuple representing the impedance with string identifiers
     :return: Tuple with the vertex indices in the new graph"""
@@ -92,6 +95,10 @@ def generate_impedance_graph(g: ig.Graph, separation_attribute="owner") -> ig.Gr
     """Given a graph whose edges all contain `separation_attribute`, return an "exploded"
     graph with impedances edges between vertices that have different values of the
     separation attribute. See the detailed test cases for how this method is intended to function.
+
+    :param g: iGraph with `separation_attribute` of type `Set`
+    :param separation_attribute: string identifying the attribute
+    :return: an exploded graph with impedance edges
 
     """
     impedances = _generate_impedances(g, separation_attribute=separation_attribute)
