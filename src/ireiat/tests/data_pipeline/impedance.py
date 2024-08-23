@@ -2,10 +2,24 @@ import unittest
 
 import igraph as ig
 
-from ireiat.data_pipeline.assets.rail_network.impedance import generate_impedance_graph
+from ireiat.data_pipeline.assets.rail_network.impedance import (
+    generate_impedance_graph,
+    _generate_subgraphs,
+)
 
 
 class TestImpedances(unittest.TestCase):
+
+    def test_generate_subgraphs_works_for_a_simple_case(self):
+        g = ig.Graph(directed=True)
+        g.add_vertices(3)
+        g.add_edges([(0, 1), (1, 2)])
+        g.es["owner"] = [{"A", "B"}, {"B"}]
+        s = _generate_subgraphs(g)
+        self.assertEqual(len(s.keys()), 2)  # just A and B
+        a_graph, b_graph = s["A"], s["B"]
+        self.assertEqual(len(a_graph.es), 1)  # A graph has 1 edge
+        self.assertEqual(len(b_graph.es), 2)  # B graph has 2 edges
 
     def _node_edge_impedance_confirmation(
         self, g: ig.Graph, expected_nodes: int, expected_edges: int, expected_impedance_edges: int
