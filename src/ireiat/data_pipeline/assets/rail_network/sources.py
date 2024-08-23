@@ -32,4 +32,3 @@ intermodal_terminals_src = dagster.SourceAsset(
         ),
     },
 )
-

@@ -46,9 +46,7 @@ def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoD
 
     # Remove links that have AMTK as the owner with no other owner and all TRKRGHTS columns are null
     amtk_filter = (
-        (links_df["RROWNER1"] == "AMTK")
-        & links_df["RROWNER2"].isna()
-        & links_df["RROWNER3"].isna()
+        (links_df["RROWNER1"] == "AMTK") & links_df["RROWNER2"].isna() & links_df["RROWNER3"].isna()
     )
     for col in trkrghts_cols:
         amtk_filter &= links_df[col].isna()
@@ -56,9 +54,7 @@ def narn_links_preprocessing(links_df: geopandas.GeoDataFrame) -> geopandas.GeoD
     links_df = links_df[~amtk_filter]
 
     # Create OWNERS column
-    links_df["OWNERS"] = links_df[rrowner_cols].apply(
-        lambda x: set(filter(pd.notna, x)), axis=1
-    )
+    links_df["OWNERS"] = links_df[rrowner_cols].apply(lambda x: set(filter(pd.notna, x)), axis=1)
 
     # Add CSXT and NS to OWNERS if PAS is one of the owners (PAS is jointly owned by CSXT and NS)
     def add_csxt_ns(owners: set[str]) -> set[str]:
@@ -139,12 +135,8 @@ def intermodal_terminals_preprocessing(terminals_df: pd.DataFrame) -> pd.DataFra
     terminals_df.loc[:, "FRA_RRS_TO_MATCH"] = terminals_df["FRA_RRS_TO_MATCH"].apply(
         clean_railroads
     )
-    terminals_df.loc[:, "FRA_RRS_AT_NODE"] = terminals_df["FRA_RRS_AT_NODE"].apply(
-        clean_railroads
-    )
-    terminals_df.loc[:, "CLOSEST_FRA_RRS"] = terminals_df["CLOSEST_FRA_RRS"].apply(
-        clean_railroads
-    )
+    terminals_df.loc[:, "FRA_RRS_AT_NODE"] = terminals_df["FRA_RRS_AT_NODE"].apply(clean_railroads)
+    terminals_df.loc[:, "CLOSEST_FRA_RRS"] = terminals_df["CLOSEST_FRA_RRS"].apply(clean_railroads)
 
     # Rename columns
     terminals_df_column_mapping = {
