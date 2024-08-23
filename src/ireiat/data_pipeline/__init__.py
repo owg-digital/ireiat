@@ -30,9 +30,9 @@ highway_network_assets_job = dagster.define_asset_job(
 rail_network_assets = dagster.load_assets_from_package_module(
     rail_network, group_name="rail_network"
 )
-# rail_network_assets_job = dagster.define_asset_job(
-#     name="rail_network_job", selection=_filter_for_non_source_assets(rail_network_assets)
-# )
+rail_network_assets_job = dagster.define_asset_job(
+    name="rail_network_job", selection=_filter_for_non_source_assets(rail_network_assets)
+)
 
 # marine network
 marine_network_assets = dagster.load_assets_from_package_module(
@@ -66,6 +66,7 @@ defs = dagster.Definitions(
     jobs=[
         demand_assets_job,
         highway_network_assets_job,
+        rail_network_assets_job,
         marine_network_assets_job,
         tap_assets_job,
         all_assets_job,
