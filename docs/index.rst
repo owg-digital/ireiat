@@ -12,6 +12,7 @@ Welcome to IREIAT's documentation!
 
    demand/faf
    network/highway_network
+   network/rail_network
 
 
 We are actively working on it.
