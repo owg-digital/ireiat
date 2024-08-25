@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Set, Dict, Tuple
+from typing import Set, Dict, Tuple, List
 
 import dagster
 import geopandas
@@ -90,13 +90,13 @@ def owner_rationalized_rail_links(
         for k in getattr(row, SEPARATION_ATTRIBUTE_NAME):
             edge_list_by_owner[k].add(row.Index)
 
-    owner_edge_count = [(k, len(v)) for k, v in edge_list_by_owner.items()]
+    owner_edge_count: List[Tuple[str, int]] = [(k, len(v)) for k, v in edge_list_by_owner.items()]
     sorted_owner_edge_count = sorted(owner_edge_count, key=lambda x: x[1], reverse=True)
     top_owners_and_edge_counts = sorted_owner_edge_count[:COUNT_UNIQUE_ATTRIBUTE_VALUES]
 
     # publish some metadata about graph coverage
-    edge_count_of_top_owners = sum([x[1] for x in top_owners_and_edge_counts])
-    edge_count_of_all_owners = sum([x[1] for x in owner_edge_count])
+    edge_count_of_top_owners: int = sum([x[1] for x in top_owners_and_edge_counts])
+    edge_count_of_all_owners: int = sum([x[1] for x in owner_edge_count])
     edge_percent = edge_count_of_top_owners / edge_count_of_all_owners
     context.log.info(
         f"Filtering for {COUNT_UNIQUE_ATTRIBUTE_VALUES}, results in {edge_percent:.1%} edges covered"
@@ -105,7 +105,8 @@ def owner_rationalized_rail_links(
     top_owners: Set[str] = set([x[0] for x in top_owners_and_edge_counts])
     context.log.info(f"Top owners {top_owners}")
 
-    def shrink_attribute(current_row_attr_vals: Set):
+    # condenses owners from {TOP_N1, TOP_N2, BOTTOM_N2, BOTTOM_N1} to {TOP_N1, TOP_N2, 'Other'}
+    def shrink_attribute(current_row_attr_vals: Set[str]) -> Set[str]:
         final_attr_vals = top_owners & current_row_attr_vals
         if len(current_row_attr_vals - top_owners) >= 1:
             final_attr_vals.add("Other")
@@ -115,7 +116,7 @@ def owner_rationalized_rail_links(
         SEPARATION_ATTRIBUTE_NAME
     ] = filtered_and_processed_rail_network_links[SEPARATION_ATTRIBUTE_NAME].apply(
         set
-    )  # when saving parquet, stores as a list
+    )  # when saving parquet, stores as a list so we need to convert to a set
     shrunk_owners = filtered_and_processed_rail_network_links[SEPARATION_ATTRIBUTE_NAME].apply(
         shrink_attribute
     )
