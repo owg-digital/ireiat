@@ -47,7 +47,7 @@ def filtered_and_processed_rail_network_links(
         real_lines[col] = real_lines[col].replace(rr_mapping_dict)
 
     owner_set = real_lines[ownership_cols].apply(lambda x: set(filter(pd.notna, x)), axis=1)
-    # remove AMTK as a relevant owner since we won't
+    # remove AMTK as a relevant owner, since interchange costs will not matter with AMTK
     owner_set.apply(lambda x: x.discard("AMTK"))
     # Add CSXT and NS to OWNERS if PAS is one of the owners (PAS is jointly owned by CSXT and NS)
     owner_set.apply(lambda x: x.update(["CSXT", "NS"]) if "PAS" in x else x)
@@ -56,7 +56,7 @@ def filtered_and_processed_rail_network_links(
 
     # columns to retain
     cols_to_retain = ["FRAARCID", "MILES", SEPARATION_ATTRIBUTE_NAME, "geometry"]
-    # exclude items with now owners
+    # exclude items with no owners at all
     real_lines_with_owners = real_lines.loc[
         real_lines[SEPARATION_ATTRIBUTE_NAME].apply(len) >= 1, cols_to_retain
     ].copy()
@@ -93,11 +93,13 @@ def owner_rationalized_rail_links(
     owner_edge_count = [(k, len(v)) for k, v in edge_list_by_owner.items()]
     sorted_owner_edge_count = sorted(owner_edge_count, key=lambda x: x[1], reverse=True)
     top_owners_and_edge_counts = sorted_owner_edge_count[:COUNT_UNIQUE_ATTRIBUTE_VALUES]
-    percent = sum([x[1] for x in top_owners_and_edge_counts]) / sum(
-        [x[1] for x in owner_edge_count]
-    )
+
+    # publish some metadata about graph coverage
+    edge_count_of_top_owners = sum([x[1] for x in top_owners_and_edge_counts])
+    edge_count_of_all_owners = sum([x[1] for x in owner_edge_count])
+    edge_percent = edge_count_of_top_owners / edge_count_of_all_owners
     context.log.info(
-        f"Filtering for {COUNT_UNIQUE_ATTRIBUTE_VALUES}, results in {percent:.1%} edges covered"
+        f"Filtering for {COUNT_UNIQUE_ATTRIBUTE_VALUES}, results in {edge_percent:.1%} edges covered"
     )
 
     top_owners: Set[str] = set([x[0] for x in top_owners_and_edge_counts])
