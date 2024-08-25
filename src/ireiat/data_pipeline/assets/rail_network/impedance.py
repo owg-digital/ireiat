@@ -1,7 +1,9 @@
 from itertools import chain, product
-from typing import Tuple, Set, Dict
+from typing import Tuple, Set, Dict, Any
 
 import igraph as ig
+
+from ireiat.config import RAIL_DEFAULT_MPH_SPEED
 
 
 def _generate_subgraphs(g: ig.Graph, separation_attribute: str = "owner") -> Dict[str, ig.Graph]:
@@ -76,21 +78,6 @@ def _generate_impedances(g: ig.Graph, separation_attribute="owner") -> Set[Tuple
     return impedances
 
 
-def _lookup_disjoint_graph_vertices(
-    disjoint_graph: ig.Graph, impedance: Tuple[str, str]
-) -> Tuple[int, int]:
-    """For a given impedance, specified by {owner}{vertex}, e.g. A1 -> B1, look up the vertices in the disjoint
-    graph and return a tuple of vertex indices.
-
-    :param disjoint_graph: graph representing the disjoint union of subgraphs separated by an attribute
-    :param impedance: Tuple representing the impedance with string identifiers
-    :return: Tuple with the vertex indices in the new graph"""
-    original_vertex_from, original_vertex_to = impedance
-    new_vertex_from = [v for v in disjoint_graph.vs.select(original_idx_eq=original_vertex_from)]
-    new_vertex_to = [v for v in disjoint_graph.vs.select(original_idx_eq=original_vertex_to)]
-    return new_vertex_from[0].index, new_vertex_to[0].index
-
-
 def generate_impedance_graph(g: ig.Graph, separation_attribute="owner") -> ig.Graph:
     """Given a graph whose edges all contain `separation_attribute`, return an "exploded"
     graph with impedances edges between vertices that have different values of the
@@ -104,10 +91,16 @@ def generate_impedance_graph(g: ig.Graph, separation_attribute="owner") -> ig.Gr
     impedances = _generate_impedances(g, separation_attribute=separation_attribute)
     subgraphs = _generate_subgraphs(g, separation_attribute=separation_attribute)
     disjoint_union = ig.disjoint_union(subgraphs.values())
-    impedance_edges = [_lookup_disjoint_graph_vertices(disjoint_union, i) for i in impedances]
-    disjoint_union.add_edges(
-        impedance_edges, {separation_attribute: "imp" for _ in impedance_edges}
-    )
+    disjoint_union_vertex_mapping = {v["original_idx"]: v.index for v in disjoint_union.vs}
+    impedance_edges = [
+        (disjoint_union_vertex_mapping[from_id], disjoint_union_vertex_mapping[to_id])
+        for from_id, to_id in impedances
+    ]
+    # construct default edge attributes for impedance edges and add them
+    impedance_edge_attrs: Dict[str, Any] = dict()
+    impedance_edge_attrs["speed"] = [RAIL_DEFAULT_MPH_SPEED for _ in impedance_edges]
+    impedance_edge_attrs[separation_attribute] = ["imp" for _ in impedance_edges]
+    disjoint_union.add_edges(impedance_edges, impedance_edge_attrs)
 
     # eliminate zero degree vertices, preserved when creating subgraphs
     disjoint_union.delete_vertices(disjoint_union.vs.select(_degree=0))
