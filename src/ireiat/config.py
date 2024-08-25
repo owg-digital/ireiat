@@ -61,3 +61,5 @@ HIGHWAY_CAPACITY_TONS = (
 )
 HIGHWAY_BETA = 4  # the exponent in the congestion term
 HIGHWAY_ALPHA = 0.15  # the scalar in the congestion term
+
+RAIL_DEFAULT_MPH_SPEED = 20  # miles per hour
