@@ -26,3 +26,8 @@ These are accomplished through:
 .. automodule:: ireiat.data_pipeline.assets.rail_network.impedance
     :members:
     :private-members:
+
+Note that because there are 900+ owner operators, we only use a subset - but cover ~80% of
+the relevant rail network edges. Thus, we may not account for some short line interchange fees.
+
+For intermodal facilities, we need to connect each facility to the impedance graph (WIP).
