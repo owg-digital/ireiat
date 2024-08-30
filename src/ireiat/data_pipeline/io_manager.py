@@ -100,6 +100,8 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
             obj.to_parquet(fpath, **parsed_write_kwargs)
         elif fmt == "csv":
             obj.to_csv(fpath, **parsed_write_kwargs)
+        elif fmt == "zip":
+            context.log.info("Assuming zip file from download. Skipping persistence.")
         else:
             raise NotImplementedError(f"Cannot read file of type {fmt}!")
 
