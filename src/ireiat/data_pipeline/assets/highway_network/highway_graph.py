@@ -19,14 +19,14 @@ from ireiat.util.graph import (
     metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
 )
 def undirected_highway_edges(
-    context: dagster.AssetExecutionContext, faf5_highway_network_links: geopandas.GeoDataFrame
+    context: dagster.AssetExecutionContext, faf5_highway_network_links_src: geopandas.GeoDataFrame
 ) -> pd.DataFrame:
     """For each undirected edge in the highway dataset, create a row in the table with origin_lat, origin_long,
     destination_lat, and destination_long, along with several other edge fields of interest"""
 
-    coords = get_coordinates_from_geoframe(faf5_highway_network_links)
+    coords = get_coordinates_from_geoframe(faf5_highway_network_links_src)
     coords = pd.concat(
-        [faf5_highway_network_links[["id", "dir", "length", "ab_finalsp"]], coords], axis=1
+        [faf5_highway_network_links_src[["id", "dir", "length", "ab_finalsp"]], coords], axis=1
     )  # join in several fields of interest
     publish_metadata(context, coords)
     return coords

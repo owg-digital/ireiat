@@ -10,6 +10,7 @@ import pandas as pd
 import pyogrio
 
 from ireiat.config import CACHE_PATH
+from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.http import download_uncached_file
 
 
@@ -99,6 +100,8 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
             obj.to_parquet(fpath, **parsed_write_kwargs)
         elif fmt == "csv":
             obj.to_csv(fpath, **parsed_write_kwargs)
+        elif fmt == "zip":
+            context.log.info("Assuming zip file from download. Skipping persistence.")
         else:
             raise NotImplementedError(f"Cannot read file of type {fmt}!")
 
@@ -107,3 +110,22 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
         return read_or_attempt_download(
             context.upstream_output.asset_key, context.upstream_output.metadata
         )
+
+
+def asset_spec_factory(spec: dagster.AssetSpec):
+    """Creates a materialized asset from an asset spec, including potentially downloading it.
+    The method relies on a naming convention for asset specs that end in "_spec" and generates
+    assets that end in "_src"."""
+
+    @dagster.asset(
+        key=spec.key.to_user_string().replace("_spec", "_src"),
+        io_manager_key="custom_io_manager",
+        metadata=spec.metadata,
+        description=spec.description,
+    )
+    def _asset(context: dagster.AssetExecutionContext):
+        result = read_or_attempt_download(spec.key, spec.metadata)
+        publish_metadata(context, result)
+        return result
+
+    return _asset

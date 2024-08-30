@@ -1,13 +1,10 @@
 import dagster
 
-from ireiat.data_pipeline.metadata import observation_function
+from ireiat.data_pipeline.io_manager import asset_spec_factory
 
-
-narn_links_src = dagster.SourceAsset(
-    key=dagster.AssetKey("narn_rail_network_links"),
-    observe_fn=observation_function,
+narn_links_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("narn_rail_network_links_spec"),
     description="Publicly available GIS data for railway network links",
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "zip",
         "filename": "narn_rail_links.zip",
@@ -17,12 +14,11 @@ narn_links_src = dagster.SourceAsset(
         ),
     },
 )
+narn_links_src = asset_spec_factory(narn_links_spec)
 
-intermodal_terminals_src = dagster.SourceAsset(
-    key=dagster.AssetKey("intermodal_terminals"),
-    observe_fn=observation_function,
+intermodal_terminals_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("intermodal_terminals_spec"),
     description="CSV containing intermodal terminal information, including mapping to corresponding rail network nodes.",
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "csv",
         "filename": "im_terminals.csv",
@@ -32,3 +28,4 @@ intermodal_terminals_src = dagster.SourceAsset(
         ),
     },
 )
+intermodal_terminals_src = asset_spec_factory(intermodal_terminals_spec)

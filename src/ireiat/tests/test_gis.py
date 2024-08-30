@@ -1,7 +1,8 @@
 import unittest
 
-import pandas as pd
 import igraph
+import pandas as pd
+
 from ireiat.util.graph import generate_zero_based_node_maps, get_allowed_node_indices
 
 

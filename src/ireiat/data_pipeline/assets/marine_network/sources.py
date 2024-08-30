@@ -1,13 +1,9 @@
 import dagster
+from ireiat.data_pipeline.io_manager import asset_spec_factory
 
-from ireiat.data_pipeline.metadata import observation_function
-
-
-marine_links_src = dagster.SourceAsset(
-    key=dagster.AssetKey("marine_network_links"),
-    observe_fn=observation_function,
+marine_links_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("marine_network_links_spec"),
     description="Publicly available US Army Corps of Engineers data for marine network links",
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "zip",
         "filename": "marine_links.zip",
@@ -17,3 +13,4 @@ marine_links_src = dagster.SourceAsset(
         ),
     },
 )
+marine_links_src = asset_spec_factory(marine_links_spec)
