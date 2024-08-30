@@ -23,24 +23,24 @@ SEPARATION_ATTRIBUTE_NAME: str = "owners"  # field used to represent owners and 
     metadata={"format": "parquet", "use_geopandas": True, **INTERMEDIATE_DIRECTORY_ARGS},
 )
 def filtered_and_processed_rail_network_links(
-    context: dagster.AssetExecutionContext, narn_rail_network_links: geopandas.GeoDataFrame
+    context: dagster.AssetExecutionContext, narn_rail_network_links_src: geopandas.GeoDataFrame
 ) -> geopandas.GeoDataFrame:
     """Preprocess the rail links data by filtering records that are known to be defunct (e.g. NET=A, Abandoned)
     and consolidating the railroad owner(s) and railroad trackage rights into a single field"""
     # remove abandoned, physically removed, and out of service
     EXCLUDED_TRACK_NET_VALUES = ["A", "R", "X"]
-    bad_track_filter = narn_rail_network_links["NET"].isin(EXCLUDED_TRACK_NET_VALUES)
+    bad_track_filter = narn_rail_network_links_src["NET"].isin(EXCLUDED_TRACK_NET_VALUES)
 
     # Remove links that have AMTK as the owner with no other owner and all TRKRGHTS columns are null
     amtk_filter = (
-        (narn_rail_network_links["RROWNER1"] == "AMTK")
-        & narn_rail_network_links["RROWNER2"].isna()
-        & narn_rail_network_links["RROWNER3"].isna()
+        (narn_rail_network_links_src["RROWNER1"] == "AMTK")
+        & narn_rail_network_links_src["RROWNER2"].isna()
+        & narn_rail_network_links_src["RROWNER3"].isna()
     )
-    for col in [c for c in narn_rail_network_links.columns if "TRKRGHTS" in c]:
-        amtk_filter &= narn_rail_network_links[col].isna()
+    for col in [c for c in narn_rail_network_links_src.columns if "TRKRGHTS" in c]:
+        amtk_filter &= narn_rail_network_links_src[col].isna()
 
-    real_lines = narn_rail_network_links[~amtk_filter & ~bad_track_filter].copy()
+    real_lines = narn_rail_network_links_src[~amtk_filter & ~bad_track_filter].copy()
     ownership_cols = [col for col in real_lines.columns if "RROWNER" in col or "TRKRGHTS" in col]
     rr_mapping_dict = {"CPRS": "CPKC", "KCS": "CPKC", "KCSM": "CPKC"}
     for col in ownership_cols:

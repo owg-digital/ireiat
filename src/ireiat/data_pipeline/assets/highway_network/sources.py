@@ -1,13 +1,10 @@
 import dagster
 
-from ireiat.data_pipeline.metadata import observation_function
+from ireiat.data_pipeline.io_manager import asset_spec_factory
 
-
-faf5_regions_src = dagster.SourceAsset(
-    key=dagster.AssetKey("faf5_highway_network_links"),
-    observe_fn=observation_function,
+faf5_regions_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("faf5_highway_network_links_spec"),
     description="Publicly available GIS data for FAF5 highway network links",
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "zip",
         "filename": "faf5_highway_links.zip",
@@ -17,3 +14,4 @@ faf5_regions_src = dagster.SourceAsset(
         ),
     },
 )
+faf5_regions_src = asset_spec_factory(faf5_regions_spec)

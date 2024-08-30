@@ -17,13 +17,13 @@ from typing import Dict, Tuple
     metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
 )
 def undirected_marine_edges(
-    context: dagster.AssetExecutionContext, marine_network_links: geopandas.GeoDataFrame
+    context: dagster.AssetExecutionContext, marine_network_links_src: geopandas.GeoDataFrame
 ) -> pd.DataFrame:
     """For each undirected edge in the marine dataset, create a row in the table with origin_lat, origin_long,
     destination_lat, and destination_long, along with several other edge fields of interest"""
 
-    link_coords = get_coordinates_from_geoframe(marine_network_links)
-    marine_network_albers = marine_network_links.to_crs(ALBERS_CRS)
+    link_coords = get_coordinates_from_geoframe(marine_network_links_src)
+    marine_network_albers = marine_network_links_src.to_crs(ALBERS_CRS)
     distance_miles = marine_network_albers.geometry.length / METERS_PER_MILE
     link_coords = pd.concat([link_coords, pd.Series(distance_miles, name="distance_miles")], axis=1)
     publish_metadata(context, link_coords)

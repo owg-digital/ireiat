@@ -1,13 +1,11 @@
 import dagster
 
-from ireiat.data_pipeline.metadata import observation_function
+from ireiat.data_pipeline.io_manager import asset_spec_factory
 
 FAF5_REGIONS_DESCRIPTION = "Publicly available GIS data for FAF5 regions"
-faf5_regions_src = dagster.SourceAsset(
-    key=dagster.AssetKey("faf5_regions_src"),
-    observe_fn=observation_function,
+faf5_regions_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("faf5_regions_spec"),
     description=FAF5_REGIONS_DESCRIPTION,
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "zip",
         "filename": "faf5_regions.zip",
@@ -18,12 +16,12 @@ faf5_regions_src = dagster.SourceAsset(
     },
 )
 
+faf5_regions_src = asset_spec_factory(faf5_regions_spec)
+
 US_COUNTY_SHP_FILES_DESCRIPTION = "Publicly available GIS data for US counties"
-us_county_shp_files_src = dagster.SourceAsset(
-    key=dagster.AssetKey("us_county_shp_files_src"),
-    observe_fn=observation_function,
+us_county_shp_files_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("us_county_shp_files_spec"),
     description=US_COUNTY_SHP_FILES_DESCRIPTION,
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "zip",
         "filename": "us_county_shp_files.zip",
@@ -33,15 +31,14 @@ us_county_shp_files_src = dagster.SourceAsset(
         ),
     },
 )
+us_county_shp_files_src = asset_spec_factory(us_county_shp_files_spec)
 
 US_CENSUS_COUNTY_POPULATION_DESCRIPTION = (
     "Publicly available census population data for US counties"
 )
-us_census_county_population_src = dagster.SourceAsset(
-    key=dagster.AssetKey("us_census_county_population_src"),
+us_census_county_population_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("us_census_county_population_spec"),
     description=US_CENSUS_COUNTY_POPULATION_DESCRIPTION,
-    observe_fn=observation_function,
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "csv",
         "filename": "co-est2022-alldata.csv",
@@ -52,13 +49,12 @@ us_census_county_population_src = dagster.SourceAsset(
         ),
     },
 )
+us_census_county_population_src = asset_spec_factory(us_census_county_population_spec)
 
 FAF_DEMAND_DESCRIPTION = "FAF5 Framework tonnage, ton miles, and values"
-faf5_demand_src = dagster.SourceAsset(
-    key=dagster.AssetKey("faf5_demand_src"),
+faf5_demand_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("faf5_demand_spec"),
     description=FAF_DEMAND_DESCRIPTION,
-    observe_fn=observation_function,
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "zip",
         "filename": "faf5_demand.zip",
@@ -72,3 +68,4 @@ faf5_demand_src = dagster.SourceAsset(
         ),
     },
 )
+faf5_demand_src = asset_spec_factory(faf5_demand_spec)
