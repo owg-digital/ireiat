@@ -14,6 +14,10 @@ from ireiat.util.graph import (
     generate_zero_based_node_maps,
     get_allowed_node_indices,
 )
+from ireiat.data_pipeline.assets.rail_network.terminals import (
+    intermodal_terminals_preprocessing,
+    update_impedance_graph_with_terminals,
+)
 
 SEPARATION_ATTRIBUTE_NAME: str = "owners"  # field used to represent owners and trackage rights
 
@@ -221,18 +225,47 @@ def impedance_rail_graph(
     return g
 
 
-# TODO (NP) - figure out how to attach intermodal terminals and the interplay with the impedances
-# @dagster.asset(
-#     io_manager_key="custom_io_manager",
-#     metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
-# )
-# def rail_network_terminals(
-#         context: dagster.AssetExecutionContext, intermodal_terminals: pd.DataFrame
-# ) -> pd.DataFrame:
-#     """Preprocess the intermodal terminals data"""
-#     processed_terminals = data_handler.intermodal_terminals_preprocessing(intermodal_terminals)
-#     context.log.info(
-#         f"Intermodal terminals data loaded and preprocessed with {processed_terminals.shape[0]} terminals"
-#     )
-#     publish_metadata(context, processed_terminals)
-#     return processed_terminals
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
+def rail_network_terminals(
+    context: dagster.AssetExecutionContext,
+    intermodal_terminals_src: pd.DataFrame,
+    complete_rail_node_to_idx: Dict[Tuple[float, float], int],
+) -> pd.DataFrame:
+    """Preprocess the intermodal terminals data, including mapping terminal coordinates
+    to rail node indices using the complete_rail_node_to_idx dictionary."""
+
+    # Preprocess the terminals using the provided rail node index mapping
+    processed_terminals = intermodal_terminals_preprocessing(
+        intermodal_terminals_src, complete_rail_node_to_idx
+    )
+
+    context.log.info(
+        f"Intermodal terminals data loaded and preprocessed with {processed_terminals.shape[0]} terminals"
+    )
+
+    # Publish metadata
+    publish_metadata(context, processed_terminals)
+
+    return processed_terminals
+
+
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
+def rail_network_graph(
+    context: dagster.AssetExecutionContext,
+    rail_network_terminals: pd.DataFrame,
+    impedance_rail_graph: ig.Graph,
+) -> ig.Graph:
+    """Updates the rail impedance graph by adding terminal nodes and edges."""
+
+    # Call the update function to modify the graph by adding terminals
+    updated_graph = update_impedance_graph_with_terminals(
+        context, rail_network_terminals, impedance_rail_graph
+    )
+    context.log.info(
+        f"Rail network graph updated with terminals. The updated graph has {len(updated_graph.vs)} nodes and {len(updated_graph.es)} edges."
+    )
+    assert updated_graph.is_connected()
+    return updated_graph
