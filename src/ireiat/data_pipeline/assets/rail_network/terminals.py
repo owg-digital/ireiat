@@ -5,6 +5,8 @@ import igraph as ig
 from math import isclose
 from typing import Optional, Dict, Tuple, Set
 
+from ireiat.util.rail_network_constants import EdgeType
+
 
 def _get_node_index(
     row: pd.Series,
@@ -183,15 +185,8 @@ def update_impedance_graph_with_terminals(
 
         # Assign attributes to the intermodal capacity edges
         for im_capacity_edge in [im_capacity_edge_1, im_capacity_edge_2]:
-            im_capacity_edge["edge_type"] = "IM Capacity"
+            im_capacity_edge["edge_type"] = EdgeType.IM_CAPACITY
             im_capacity_edge["owners"] = terminal_operators
-            im_capacity_edge["beta"] = 1
-            im_capacity_edge["length"] = 0.1
-            im_capacity_edge["speed"] = 100
-            im_capacity_edge["capacity"] = 100
-            im_capacity_edge["cost"] = 100
-            im_capacity_edge["alpha"] = 1
-            im_capacity_edge["beta"] = 1
 
         # Now connect the dummy terminal vertex to the existing rail vertices
         for v in vertices:
@@ -203,19 +198,12 @@ def update_impedance_graph_with_terminals(
 
                 # Create edges from terminal_vertex_2 to the existing vertex and vice versa
                 for direction in [
-                    (terminal_vertex_2, v, "Rail to Quant"),
-                    (v, terminal_vertex_2, "Quant to Rail"),
+                    (terminal_vertex_2, v, EdgeType.RAIL_TO_QUANT),
+                    (v, terminal_vertex_2, EdgeType.QUANT_TO_RAIL),
                 ]:
                     new_edge = impedance_rail_graph.add_edge(direction[0], direction[1])
                     new_edge["edge_type"] = direction[2]
                     new_edge["owners"] = vertex_owner
-                    new_edge["beta"] = 1
-                    new_edge["length"] = 0.1
-                    new_edge["speed"] = 100
-                    new_edge["capacity"] = 100
-                    new_edge["cost"] = 100
-                    new_edge["alpha"] = 1
-                    new_edge["beta"] = 1
 
             # Handle 'Other' vertices (if no matching railroad is found)
             elif vertex_owner == "Other" and other_vertex is None:
@@ -225,18 +213,11 @@ def update_impedance_graph_with_terminals(
         if unconnected_railroads and other_vertex:
             # Create edges from terminal_vertex_2 to 'Other' vertex and vice versa
             for direction in [
-                (terminal_vertex_2, other_vertex, "Rail to Quant"),
-                (other_vertex, terminal_vertex_2, "Quant to Rail"),
+                (terminal_vertex_2, other_vertex, EdgeType.RAIL_TO_QUANT),
+                (other_vertex, terminal_vertex_2, EdgeType.QUANT_TO_RAIL),
             ]:
                 new_edge = impedance_rail_graph.add_edge(direction[0], direction[1])
                 new_edge["edge_type"] = direction[2]
                 new_edge["owners"] = "Other"
-                new_edge["beta"] = 1
-                new_edge["length"] = 0.1
-                new_edge["speed"] = 100
-                new_edge["capacity"] = 100
-                new_edge["cost"] = 100
-                new_edge["alpha"] = 1
-                new_edge["beta"] = 1
 
     return impedance_rail_graph
