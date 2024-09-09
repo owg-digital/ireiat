@@ -168,13 +168,13 @@ def update_impedance_graph_with_terminals(
 
         # Assign attributes to the new terminal vertices
         terminal_vertex_1["terminal_name"] = row.terminal_name
-        terminal_vertex_1["vertex_type"] = VertexType.IM_TERMINAL
+        terminal_vertex_1["vertex_type"] = VertexType.IM_TERMINAL.value
         terminal_vertex_1["owners"] = terminal_operators
         terminal_vertex_1["latitude"] = round(row.latitude, 6)
         terminal_vertex_1["longitude"] = round(row.longitude, 6)
 
         terminal_vertex_2["terminal_name"] = row.terminal_name
-        terminal_vertex_2["vertex_type"] = VertexType.IM_DUMMY_NODE
+        terminal_vertex_2["vertex_type"] = VertexType.IM_DUMMY_NODE.value
         terminal_vertex_2["owners"] = terminal_operators
         terminal_vertex_2["latitude"] = round(row.latitude, 6)
         terminal_vertex_2["longitude"] = round(row.longitude, 6)
@@ -185,7 +185,7 @@ def update_impedance_graph_with_terminals(
 
         # Assign attributes to the intermodal capacity edges
         for im_capacity_edge in [im_capacity_edge_1, im_capacity_edge_2]:
-            im_capacity_edge["edge_type"] = EdgeType.IM_CAPACITY
+            im_capacity_edge["edge_type"] = EdgeType.IM_CAPACITY.value
             im_capacity_edge["owners"] = terminal_operators
 
         # Now connect the dummy terminal vertex to the existing rail vertices
@@ -198,8 +198,8 @@ def update_impedance_graph_with_terminals(
 
                 # Create edges from terminal_vertex_2 to the existing vertex and vice versa
                 for direction in [
-                    (terminal_vertex_2, v, EdgeType.RAIL_TO_QUANT),
-                    (v, terminal_vertex_2, EdgeType.QUANT_TO_RAIL),
+                    (terminal_vertex_2, v, EdgeType.RAIL_TO_QUANT.value),
+                    (v, terminal_vertex_2, EdgeType.QUANT_TO_RAIL.value),
                 ]:
                     new_edge = impedance_rail_graph.add_edge(direction[0], direction[1])
                     new_edge["edge_type"] = direction[2]
@@ -213,8 +213,8 @@ def update_impedance_graph_with_terminals(
         if unconnected_railroads and other_vertex:
             # Create edges from terminal_vertex_2 to 'Other' vertex and vice versa
             for direction in [
-                (terminal_vertex_2, other_vertex, EdgeType.RAIL_TO_QUANT),
-                (other_vertex, terminal_vertex_2, EdgeType.QUANT_TO_RAIL),
+                (terminal_vertex_2, other_vertex, EdgeType.RAIL_TO_QUANT.value),
+                (other_vertex, terminal_vertex_2, EdgeType.QUANT_TO_RAIL.value),
             ]:
                 new_edge = impedance_rail_graph.add_edge(direction[0], direction[1])
                 new_edge["edge_type"] = direction[2]
