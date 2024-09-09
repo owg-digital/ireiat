@@ -5,7 +5,7 @@ import igraph as ig
 from math import isclose
 from typing import Optional, Dict, Tuple, Set
 
-from ireiat.util.rail_network_constants import EdgeType
+from ireiat.util.rail_network_constants import VertexType, EdgeType
 
 
 def _get_node_index(
@@ -168,13 +168,13 @@ def update_impedance_graph_with_terminals(
 
         # Assign attributes to the new terminal vertices
         terminal_vertex_1["terminal_name"] = row.terminal_name
-        terminal_vertex_1["vertex_type"] = "IM Terminal"
+        terminal_vertex_1["vertex_type"] = VertexType.IM_TERMINAL
         terminal_vertex_1["owners"] = terminal_operators
         terminal_vertex_1["latitude"] = round(row.latitude, 6)
         terminal_vertex_1["longitude"] = round(row.longitude, 6)
 
         terminal_vertex_2["terminal_name"] = row.terminal_name
-        terminal_vertex_2["vertex_type"] = "IM Dummy Node"
+        terminal_vertex_2["vertex_type"] = VertexType.IM_DUMMY_NODE
         terminal_vertex_2["owners"] = terminal_operators
         terminal_vertex_2["latitude"] = round(row.latitude, 6)
         terminal_vertex_2["longitude"] = round(row.longitude, 6)
