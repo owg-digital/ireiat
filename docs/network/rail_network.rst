@@ -38,4 +38,4 @@ For intermodal facilities, we connect each facility to the impedance graph by ad
 These two nodes are linked by a pair of **Intermodal Capacity** edges. Each dummy node is then connected to existing
 rail network nodes based on the terminal's railroad operators using **Rail to Quant** or **Quant to Rail** edges.
 
-..  image:: ../_static/network/rail/intermodal_terminals_example.png
+..  image:: ../_static/network/rail/intermodal_terminal_example.png
