@@ -30,4 +30,12 @@ These are accomplished through:
 Note that because there are 900+ owner operators, we only use a subset - but cover ~80% of
 the relevant rail network edges. Thus, we may not account for some short line interchange fees.
 
-For intermodal facilities, we need to connect each facility to the impedance graph (WIP).
+For intermodal facilities, we connect each facility to the impedance graph by adding two new vertices:
+
+1. **Intermodal Terminal**: Represents the intermodal terminal.
+2. **Intermodal Dummy Node**: Serves as an intermediary connection point for calculating intermodal capacities and costs.
+
+These two nodes are linked by a pair of **Intermodal Capacity** edges. Each dummy node is then connected to existing
+rail network nodes based on the terminal's railroad operators using **Rail to Quant** or **Quant to Rail** edges.
+
+.. image:: ../_static/network/intermodal_terminals_example.png
