@@ -97,5 +97,6 @@ def marine_network_dataframe(
 
     # create and return a dataframe
     pdf = pd.DataFrame(connected_edge_tuples, columns=["tail", "head", "length"])
+    context.log.info(f"Marine network dataframe created with {len(pdf)} edges.")
     publish_metadata(context, pdf)
     return pdf

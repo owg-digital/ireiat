@@ -288,5 +288,6 @@ def rail_network_dataframe(
     pdf = pd.DataFrame(
         connected_edge_tuples, columns=["tail", "head", "length", "speed", "edge_type", "owners"]
     )
+    context.log.info(f"Rail network dataframe created with {len(pdf)} edges.")
     publish_metadata(context, pdf)
     return pdf
