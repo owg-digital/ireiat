@@ -186,7 +186,7 @@ def update_impedance_graph_with_terminals(
         # Assign attributes to the intermodal capacity edges
         for im_capacity_edge in [im_capacity_edge_1, im_capacity_edge_2]:
             im_capacity_edge["edge_type"] = EdgeType.IM_CAPACITY.value
-            im_capacity_edge["owners"] = terminal_operators
+            im_capacity_edge["owners"] = ", ".join(terminal_operators)
 
         # Now connect the dummy terminal vertex to the existing rail vertices
         for v in vertices:
