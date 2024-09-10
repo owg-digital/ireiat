@@ -269,3 +269,25 @@ def rail_network_graph(
     )
     assert updated_graph.is_connected()
     return updated_graph
+
+
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
+def rail_network_dataframe(
+    context: dagster.AssetExecutionContext, rail_network_graph: ig.Graph
+) -> pd.DataFrame:
+    """Returns a dataframe of graph edges along with attributes needed to solve the TAP"""
+    connected_edge_tuples = [
+        (e.source, e.target, e["length"], e["speed"], e["edge_type"], e["owners"])
+        for e in rail_network_graph.es
+    ]
+
+    # create and return a dataframe
+    pdf = pd.DataFrame(
+        connected_edge_tuples, columns=["tail", "head", "length", "speed", "edge_type", "owners"]
+    )
+    context.log.info(f"Rail network dataframe created with {len(pdf)} edges.")
+    publish_metadata(context, pdf)
+    return pdf

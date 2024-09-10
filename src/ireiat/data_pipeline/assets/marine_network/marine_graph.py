@@ -81,3 +81,22 @@ def strongly_connected_marine_graph(
     # construct a connected subgraph
     connected_subgraph = g.subgraph(allowed_node_indices)
     return connected_subgraph
+
+
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+)
+def marine_network_dataframe(
+    context: dagster.AssetExecutionContext, strongly_connected_marine_graph: ig.Graph
+) -> pd.DataFrame:
+    """Returns a dataframe of graph edges along with attributes needed to solve the TAP"""
+    connected_edge_tuples = [
+        (e.source, e.target, e["length"]) for e in strongly_connected_marine_graph.es
+    ]
+
+    # create and return a dataframe
+    pdf = pd.DataFrame(connected_edge_tuples, columns=["tail", "head", "length"])
+    context.log.info(f"Marine network dataframe created with {len(pdf)} edges.")
+    publish_metadata(context, pdf)
+    return pdf
