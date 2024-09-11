@@ -42,6 +42,7 @@ def tap_highway_network_dataframe(
     tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0
+    context.log.info(f"TAP highway network dataframe created with {len(tap_network)} edges.")
     publish_metadata(context, tap_network)
     return tap_network
 
@@ -60,9 +61,14 @@ def tap_rail_network_dataframe(
     """Entire network to represent the TAP, complete with capacity and cost information"""
     # fill out other fields needed for the TAP
     tap_network = rail_network_dataframe
-    tap_network["speed"] = tap_network["speed"].fillna(
-        RAIL_DEFAULT_MPH_SPEED
-    )  # fill in any null speeds
+
+    if "speed" not in tap_network.columns:
+        # If the 'speed' column doesn't exist
+        tap_network["speed"] = RAIL_DEFAULT_MPH_SPEED
+    else:
+        # Fill missing values with the default value
+        tap_network["speed"] = tap_network["speed"].fillna(RAIL_DEFAULT_MPH_SPEED)
+
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
     tap_network["beta"] = RAIL_BETA
     tap_network["alpha"] = RAIL_ALPHA
@@ -70,6 +76,7 @@ def tap_rail_network_dataframe(
     tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0
+    context.log.info(f"TAP rail network dataframe created with {len(tap_network)} edges.")
     publish_metadata(context, tap_network)
     return tap_network
 
@@ -88,9 +95,14 @@ def tap_marine_network_dataframe(
     """Entire network to represent the TAP, complete with capacity and cost information"""
     # fill out other fields needed for the TAP
     tap_network = marine_network_dataframe
-    tap_network["speed"] = tap_network["speed"].fillna(
-        MARINE_DEFAULT_MPH_SPEED
-    )  # fill in any null speeds
+
+    if "speed" not in tap_network.columns:
+        # If the 'speed' column doesn't exist
+        tap_network["speed"] = MARINE_DEFAULT_MPH_SPEED
+    else:
+        # Fill missing values with the default value
+        tap_network["speed"] = tap_network["speed"].fillna(MARINE_DEFAULT_MPH_SPEED)
+
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
     tap_network["beta"] = MARINE_BETA
     tap_network["alpha"] = MARINE_ALPHA
@@ -98,5 +110,6 @@ def tap_marine_network_dataframe(
     tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0
+    context.log.info(f"TAP marine network dataframe created with {len(tap_network)} edges.")
     publish_metadata(context, tap_network)
     return tap_network
