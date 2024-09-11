@@ -5,6 +5,14 @@ from ireiat.config import (
     HIGHWAY_BETA,
     HIGHWAY_ALPHA,
     HIGHWAY_CAPACITY_TONS,
+    RAIL_BETA,
+    RAIL_ALPHA,
+    RAIL_CAPACITY_TONS,
+    RAIL_DEFAULT_MPH_SPEED,
+    MARINE_BETA,
+    MARINE_ALPHA,
+    MARINE_CAPACITY_TONS,
+    MARINE_DEFAULT_MPH_SPEED,
     INTERMEDIATE_DIRECTORY_ARGS,
 )
 from ireiat.data_pipeline.metadata import publish_metadata
@@ -38,9 +46,6 @@ def tap_highway_network_dataframe(
     return tap_network
 
 
-# TODO (HD): TAP RAIL AND MARINE NETWORK DATAFRAMES BELOW
-
-
 @dagster.asset(
     io_manager_key="custom_io_manager",
     metadata={
@@ -56,12 +61,12 @@ def tap_rail_network_dataframe(
     # fill out other fields needed for the TAP
     tap_network = rail_network_dataframe
     tap_network["speed"] = tap_network["speed"].fillna(
-        tap_network["speed"].mean()
+        RAIL_DEFAULT_MPH_SPEED
     )  # fill in any null speeds
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
-    tap_network["beta"] = HIGHWAY_BETA
-    tap_network["alpha"] = HIGHWAY_ALPHA
-    tap_network["capacity"] = HIGHWAY_CAPACITY_TONS
+    tap_network["beta"] = RAIL_BETA
+    tap_network["alpha"] = RAIL_ALPHA
+    tap_network["capacity"] = RAIL_CAPACITY_TONS
     tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0
@@ -84,12 +89,12 @@ def tap_marine_network_dataframe(
     # fill out other fields needed for the TAP
     tap_network = marine_network_dataframe
     tap_network["speed"] = tap_network["speed"].fillna(
-        tap_network["speed"].mean()
+        MARINE_DEFAULT_MPH_SPEED
     )  # fill in any null speeds
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
-    tap_network["beta"] = HIGHWAY_BETA
-    tap_network["alpha"] = HIGHWAY_ALPHA
-    tap_network["capacity"] = HIGHWAY_CAPACITY_TONS
+    tap_network["beta"] = MARINE_BETA
+    tap_network["alpha"] = MARINE_ALPHA
+    tap_network["capacity"] = MARINE_CAPACITY_TONS
     tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0
