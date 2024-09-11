@@ -64,13 +64,13 @@ HIGHWAY_BETA = 4  # the exponent in the congestion term
 HIGHWAY_ALPHA = 0.15  # the scalar in the congestion term
 
 # Rail
-RAIL_CAPACITY_TONS = 80000
-RAIL_BETA = 4  # the exponent in the congestion term
-RAIL_ALPHA = 0.15  # the scalar in the congestion term
+RAIL_CAPACITY_TONS = 100000
+RAIL_BETA = 3.5  # the exponent in the congestion term
+RAIL_ALPHA = 0.1  # the scalar in the congestion term
 RAIL_DEFAULT_MPH_SPEED = 20  # miles per hour
 
 # Marine
-MARINE_CAPACITY_TONS = 80000
-MARINE_BETA = 4  # the exponent in the congestion term
-MARINE_ALPHA = 0.15  # the scalar in the congestion term
-MARINE_DEFAULT_MPH_SPEED = 20  # miles per hour
+MARINE_CAPACITY_TONS = 150000
+MARINE_BETA = 3  # the exponent in the congestion term
+MARINE_ALPHA = 0.05  # the scalar in the congestion term
+MARINE_DEFAULT_MPH_SPEED = 15  # miles per hour
