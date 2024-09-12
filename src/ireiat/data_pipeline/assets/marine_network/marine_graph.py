@@ -48,7 +48,7 @@ def strongly_connected_marine_graph(
     undirected_marine_edges: pd.DataFrame,
     complete_marine_node_to_idx: Dict[Tuple[float, float], int],
 ) -> ig.Graph:
-    """iGraph object representing a strongly connected, undirected graph based on the marine network"""
+    """iGraph object representing a strongly connected, directed graph based on the marine network"""
     edge_tuples = []
     edge_attributes = []
 
@@ -59,7 +59,12 @@ def strongly_connected_marine_graph(
             complete_marine_node_to_idx[origin_coords],
             complete_marine_node_to_idx[destination_coords],
         )
+        # Add edges in both directions
         edge_tuples.append((tail, head))
+        edge_tuples.append((head, tail))
+
+        # Duplicate attributes for both directions
+        edge_attributes.append((row.distance_miles, idx))
         edge_attributes.append((row.distance_miles, idx))
 
     # generate a graph from all nodes
@@ -73,7 +78,7 @@ def strongly_connected_marine_graph(
             "length": [attr[0] for attr in edge_attributes],
             "original_id": [attr[1] for attr in edge_attributes],
         },
-        directed=False,
+        directed=True,
     )
     context.log.info(f"Initial constructed graph connected?: {g.is_connected()}")
     allowed_node_indices = get_allowed_node_indices(g)
