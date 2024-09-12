@@ -70,7 +70,7 @@ def tap_rail_network_dataframe(
 
     # TODO: Utilize "TRACKNUM" field from the railway dataset to base capacity on the actual number of tracks
     tap_network["capacity"] = tap_network["capacity"].fillna(
-        CONFIG.RAIL_CAPACITY_TONS
+        CONFIG.RAIL_DEFAULT_LINK_CAPACITY_TONS
     )  # fill in any null capacity values with default value from config.py
 
     tap_network = tap_network.sort_values(["tail", "head"])

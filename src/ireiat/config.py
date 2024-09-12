@@ -64,7 +64,8 @@ HIGHWAY_BETA = 4  # the exponent in the congestion term
 HIGHWAY_ALPHA = 0.15  # the scalar in the congestion term
 
 # Rail
-RAIL_CAPACITY_TONS = 100000
+RAIL_DEFAULT_TERMINAL_CAPACITY_TONS = 100000
+RAIL_DEFAULT_LINK_CAPACITY_TONS = 60000
 RAIL_DEFAULT_MPH_SPEED = 20  # miles per hour
 # Beta - the exponent in the congestion term
 RAIL_BETA_IM = 1

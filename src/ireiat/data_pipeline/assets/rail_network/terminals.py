@@ -7,7 +7,7 @@ from typing import Optional, Dict, Tuple, Set
 
 from ireiat.util.rail_network_constants import VertexType, EdgeType
 from ireiat.config import (
-    RAIL_CAPACITY_TONS,
+    RAIL_DEFAULT_TERMINAL_CAPACITY_TONS,
 )  # TODO: Remove once capacity is added to raw terminals data
 
 
@@ -76,7 +76,9 @@ def intermodal_terminals_preprocessing(
     terminals_df["FRA_RRS_TO_MATCH"] = terminals_df["FRA_RRS_TO_MATCH"].apply(clean_railroads)
 
     # TODO: "CAPACITY" field should come from the raw terminals dataframe
-    terminals_df["CAPACITY"] = RAIL_CAPACITY_TONS  # Dummy capacity value from config.py
+    terminals_df["CAPACITY"] = (
+        RAIL_DEFAULT_TERMINAL_CAPACITY_TONS  # Default terminal capacity value
+    )
 
     # Rename columns for consistency and clarity
     terminals_df_column_mapping = {
