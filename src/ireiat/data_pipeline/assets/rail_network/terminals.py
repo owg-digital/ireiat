@@ -6,7 +6,9 @@ from math import isclose
 from typing import Optional, Dict, Tuple, Set
 
 from ireiat.util.rail_network_constants import VertexType, EdgeType
-from ireiat.config import RAIL_CAPACITY_TONS
+from ireiat.config import (
+    RAIL_CAPACITY_TONS,
+)  # TODO: Remove once capacity is added to raw terminals data
 
 
 def _get_node_index(
@@ -192,7 +194,7 @@ def update_impedance_graph_with_terminals(
         for im_capacity_edge in [im_capacity_edge_1, im_capacity_edge_2]:
             im_capacity_edge["edge_type"] = EdgeType.IM_CAPACITY.value
             im_capacity_edge["owners"] = ",".join(terminal_operators)
-            im_capacity_edge["capacity"] = row.capacity
+            im_capacity_edge["capacity"] = row.terminal_capacity
 
         # Now connect the dummy terminal vertex to the existing rail vertices
         for v in vertices:

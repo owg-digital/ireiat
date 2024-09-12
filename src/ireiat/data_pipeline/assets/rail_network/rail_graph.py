@@ -280,13 +280,14 @@ def rail_network_dataframe(
 ) -> pd.DataFrame:
     """Returns a dataframe of graph edges along with attributes needed to solve the TAP"""
     connected_edge_tuples = [
-        (e.source, e.target, e["length"], e["speed"], e["edge_type"], e["owners"])
+        (e.source, e.target, e["length"], e["speed"], e["edge_type"], e["owners"], e["capacity"])
         for e in rail_network_graph.es
     ]
 
     # create and return a dataframe
     pdf = pd.DataFrame(
-        connected_edge_tuples, columns=["tail", "head", "length", "speed", "edge_type", "owners"]
+        connected_edge_tuples,
+        columns=["tail", "head", "length", "speed", "edge_type", "owners", "capacity"],
     )
     context.log.info(f"Rail network dataframe created with {len(pdf)} edges.")
     publish_metadata(context, pdf)
