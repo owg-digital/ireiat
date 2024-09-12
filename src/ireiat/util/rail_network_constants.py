@@ -18,3 +18,5 @@ class EdgeType(StrEnum):
     IM_CAPACITY = "Intermodal Capacity Link"
     RAIL_TO_QUANT = "Rail Network to Quant Network Link"
     QUANT_TO_RAIL = "Quant Network to Rail Network Link"
+    RAIL_LINK = "Rail Link"
+    IMPEDANCE_LINK = "Impedance Link"

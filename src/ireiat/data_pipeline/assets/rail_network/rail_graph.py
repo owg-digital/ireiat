@@ -7,6 +7,7 @@ import igraph as ig
 import pandas as pd
 
 from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS, RAIL_DEFAULT_MPH_SPEED
+from ireiat.util.rail_network_constants import EdgeType
 from ireiat.data_pipeline.assets.rail_network.impedance import generate_impedance_graph
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import (
@@ -199,7 +200,8 @@ def strongly_connected_rail_graph(
         edge_attrs={
             "length": [attr[0] for attr in edge_attributes],
             "owners": [attr[2] for attr in edge_attributes],
-            "speed": [RAIL_DEFAULT_MPH_SPEED for attr in edge_attributes],
+            "speed": [RAIL_DEFAULT_MPH_SPEED for _ in edge_attributes],
+            "edge_type": [EdgeType.RAIL_LINK.value for _ in edge_attributes],
             "original_id": [attr[1] for attr in edge_attributes],
         },
         directed=True,
