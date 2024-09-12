@@ -6,6 +6,9 @@ from math import isclose
 from typing import Optional, Dict, Tuple, Set
 
 from ireiat.util.rail_network_constants import VertexType, EdgeType
+from ireiat.config import (
+    RAIL_DEFAULT_TERMINAL_CAPACITY_TONS,
+)  # TODO: Remove once capacity is added to raw terminals data
 
 
 def _get_node_index(
@@ -72,12 +75,18 @@ def intermodal_terminals_preprocessing(
     # Apply the cleaning function to the 'FRA_RRS_TO_MATCH' column
     terminals_df["FRA_RRS_TO_MATCH"] = terminals_df["FRA_RRS_TO_MATCH"].apply(clean_railroads)
 
+    # TODO: "CAPACITY" field should come from the raw terminals dataframe
+    terminals_df["CAPACITY"] = (
+        RAIL_DEFAULT_TERMINAL_CAPACITY_TONS  # Default terminal capacity value
+    )
+
     # Rename columns for consistency and clarity
     terminals_df_column_mapping = {
         "TERMINAL": "terminal_name",
         "FRA_RRS_TO_MATCH": "railroads",
         "LAT_AT_NODE": "latitude",
         "LON_AT_NODE": "longitude",
+        "CAPACITY": "terminal_capacity",
     }
 
     terminals_df = terminals_df.rename(columns=terminals_df_column_mapping)
@@ -187,6 +196,7 @@ def update_impedance_graph_with_terminals(
         for im_capacity_edge in [im_capacity_edge_1, im_capacity_edge_2]:
             im_capacity_edge["edge_type"] = EdgeType.IM_CAPACITY.value
             im_capacity_edge["owners"] = ",".join(terminal_operators)
+            im_capacity_edge["capacity"] = row.terminal_capacity
 
         # Now connect the dummy terminal vertex to the existing rail vertices
         for v in vertices:

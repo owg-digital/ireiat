@@ -56,10 +56,26 @@ EXCLUDED_FIPS_CODES_MAP = {
 }
 
 # TAP-related parameters
+# Highway
 HIGHWAY_CAPACITY_TONS = (
     80000  # TODO (NP): Placeholder while we translate from tons->vehicles or put a tonnage limit
 )
 HIGHWAY_BETA = 4  # the exponent in the congestion term
 HIGHWAY_ALPHA = 0.15  # the scalar in the congestion term
 
+# Rail
+RAIL_DEFAULT_TERMINAL_CAPACITY_TONS = 100000
+RAIL_DEFAULT_LINK_CAPACITY_TONS = 60000
 RAIL_DEFAULT_MPH_SPEED = 20  # miles per hour
+# Beta - the exponent in the congestion term
+RAIL_BETA_IM = 1
+RAIL_BETA = 3.5
+# Alpha - # the scalar in the congestion term
+RAIL_ALPHA_IM = 1
+RAIL_ALPHA = 0.1
+
+# Marine
+MARINE_CAPACITY_TONS = 150000
+MARINE_BETA = 1  # the exponent in the congestion term
+MARINE_ALPHA = 0.001  # the scalar in the congestion term
+MARINE_DEFAULT_MPH_SPEED = 15  # miles per hour

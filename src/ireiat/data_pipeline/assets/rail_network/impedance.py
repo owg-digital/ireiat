@@ -4,6 +4,7 @@ from typing import Tuple, Set, Dict, Any
 import igraph as ig
 
 from ireiat.config import RAIL_DEFAULT_MPH_SPEED
+from ireiat.util.rail_network_constants import EdgeType
 
 
 def _generate_subgraphs(g: ig.Graph, separation_attribute: str = "owner") -> Dict[str, ig.Graph]:
@@ -99,6 +100,7 @@ def generate_impedance_graph(g: ig.Graph, separation_attribute="owner") -> ig.Gr
     # construct default edge attributes for impedance edges and add them
     impedance_edge_attrs: Dict[str, Any] = dict()
     impedance_edge_attrs["speed"] = [RAIL_DEFAULT_MPH_SPEED for _ in impedance_edges]
+    impedance_edge_attrs["edge_type"] = [EdgeType.IMPEDANCE_LINK.value for _ in impedance_edges]
     impedance_edge_attrs[separation_attribute] = ["imp" for _ in impedance_edges]
     disjoint_union.add_edges(impedance_edges, impedance_edge_attrs)
 
