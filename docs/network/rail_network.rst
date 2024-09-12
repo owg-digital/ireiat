@@ -59,3 +59,5 @@ Assumptions
 4. **Free-Flow Travel Time (fft)**: This is calculated as the ratio of link length to speed, representing the time it 
    takes to traverse a link under ideal conditions.
 
+..  image:: ../_static/network/rail/tap_rail_network_example.png
+
