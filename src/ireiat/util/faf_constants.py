@@ -21,10 +21,10 @@ class FAFDemandByMode(StrEnum):
     Enum representing different freight demand modes in the FAF dataset.
     """
 
-    TRUCK = "faf_truck_demand"
-    RAIL = "faf_rail_demand"
-    WATER = "faf_water_demand"
-    OTHER_AND_UNKNOWN = "faf_other_and_unknown_demand"
+    TRUCK = "faf5_truck_demand"
+    RAIL = "faf5_rail_demand"
+    WATER = "faf5_water_demand"
+    OTHER_AND_UNKNOWN = "faf5_other_and_unknown_demand"
 
 
 class FAFCommodity(StrEnum):

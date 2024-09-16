@@ -11,32 +11,54 @@ from ireiat.config import (
     INTERMEDIATE_DIRECTORY_ARGS,
 )
 from ireiat.data_pipeline.metadata import publish_metadata
-from ireiat.util.faf_constants import FAFMode
+from ireiat.util.faf_constants import FAFMode, FAFDemandByMode
 
 
-@dagster.asset(
-    io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+@dagster.multi_asset(
+    outs={
+        mode.value: dagster.AssetOut(
+            io_manager_key="custom_io_manager",
+            metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+        )
+        for mode in FAFDemandByMode
+    }
 )
-def faf5_truck_demand(
+def faf5_demand_by_mode(
     context: dagster.AssetExecutionContext, faf5_demand_src: pd.DataFrame
-) -> pd.DataFrame:
-    """FAF5 containerizable demand using the truck mode. Currently, FAF containerizable demand
-    is limited by commodity. Based on OW knowledge of containerizable commodities"""
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Multi-asset function to extract demand data for different transport modes (Truck, Rail, Water).
+    Currently, FAF containerizable demand is limited by commodity.
+    """
 
-    # filter for containerizable
+    # Filter for containerizable commodities
     is_containerizable = ~faf5_demand_src["sctg2"].isin(NON_CONTAINERIZABLE_COMMODITIES)
     faf_containerizable_pdf = faf5_demand_src.loc[is_containerizable]
 
-    # filter for truck mode
-    is_by_truck = faf_containerizable_pdf["dms_mode"] == FAFMode.TRUCK
-    faf_truck_pdf = faf_containerizable_pdf.loc[is_by_truck]
+    # Initialize a list to store DataFrames for each mode
+    demand_dataframes = []
 
-    total_road_tons_od_pdf = faf_truck_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
-        [FAF_TONS_TARGET_FIELD]
-    ].sum()
-    publish_metadata(context, total_road_tons_od_pdf)
-    return total_road_tons_od_pdf
+    # Loop through each mode and generate the corresponding demand DataFrame
+    for mode in FAFDemandByMode:
+        mode_str = mode.name  # e.g., "TRUCK", "RAIL"
+
+        is_by_mode = faf_containerizable_pdf["dms_mode"] == FAFMode[mode_str]
+        faf_mode_pdf = faf_containerizable_pdf.loc[is_by_mode]
+
+        # Group by origin and destination to calculate total tons
+        total_tons_od_pdf = faf_mode_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
+            [FAF_TONS_TARGET_FIELD]
+        ].sum()
+
+        # Log and store the DataFrame, providing the correct output_name for multi-asset
+        context.log.info(f"{mode_str} mode demand generated with {len(total_tons_od_pdf)} records.")
+        publish_metadata(context, total_tons_od_pdf, output_name=mode.value)
+
+        # Append to the list in the order of the enum
+        demand_dataframes.append(total_tons_od_pdf)
+
+    # Return the dataframes in the same order as the enum
+    return tuple(demand_dataframes)
 
 
 @dagster.asset(
@@ -73,28 +95,3 @@ def county_to_county_highway_tons(
     non_zero_county_od_pdf = county_od_pdf.loc[county_od_pdf["tons"] > 0].sort_values("tons")
     publish_metadata(context, non_zero_county_od_pdf)
     return non_zero_county_od_pdf
-
-
-@dagster.asset(
-    io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
-)
-def faf5_rail_demand(
-    context: dagster.AssetExecutionContext, faf5_demand_src: pd.DataFrame
-) -> pd.DataFrame:
-    """FAF5 containerizable demand using the rail mode. Currently, FAF containerizable demand
-    is limited by commodity. Based on OW knowledge of containerizable commodities"""
-
-    # filter for containerizable
-    is_containerizable = ~faf5_demand_src["sctg2"].isin(NON_CONTAINERIZABLE_COMMODITIES)
-    faf_containerizable_pdf = faf5_demand_src.loc[is_containerizable]
-
-    # filter for rail mode
-    is_by_rail = faf_containerizable_pdf["dms_mode"] == FAFMode.RAIL
-    faf_rail_pdf = faf_containerizable_pdf.loc[is_by_rail]
-
-    total_rail_tons_od_pdf = faf_rail_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
-        [FAF_TONS_TARGET_FIELD]
-    ].sum()
-    publish_metadata(context, total_rail_tons_od_pdf)
-    return total_rail_tons_od_pdf
