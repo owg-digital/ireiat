@@ -27,7 +27,7 @@ def faf5_demand_by_mode(
     context: dagster.AssetExecutionContext, faf5_demand_src: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Multi-asset function to extract demand data for different transport modes (Truck, Rail, Water).
+    Multi-asset function to extract demand data for different transport modes (Truck, Rail, Water, Other/Unknown).
     Currently, FAF containerizable demand is limited by commodity.
     """
 
