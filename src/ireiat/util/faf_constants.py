@@ -16,6 +16,17 @@ class FAFMode(IntEnum):
     NO_DOMESTIC_MODE = 8
 
 
+class FAFDemandByMode(StrEnum):
+    """
+    Enum representing different freight demand modes in the FAF dataset.
+    """
+
+    TRUCK = "faf_truck_demand"
+    RAIL = "faf_rail_demand"
+    WATER = "faf_water_demand"
+    OTHER_AND_UNKNOWN = "faf_other_and_unknown_demand"
+
+
 class FAFCommodity(StrEnum):
     """
     FAF SCTG2 codes. See https://www.bts.gov/sites/bts.dot.gov/files/2021-02/FAF5-User-Guide.pdf
