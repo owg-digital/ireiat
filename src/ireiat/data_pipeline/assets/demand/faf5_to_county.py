@@ -46,7 +46,7 @@ def faf_id_to_county_areas(
             )
         ]
 
-        faf_zone_to_county[row.faf_zone] = np.round(tol_adjusted_county_intersection, 2).to_dict()
+        faf_zone_to_county[row.FAF_Zone] = np.round(tol_adjusted_county_intersection, 2).to_dict()
 
     # compute a map that links faf_zone_ids to counties
     # compute a map that tabulates the percentage of a county's area that's covered by a FAF zone
@@ -85,7 +85,7 @@ def faf_id_to_county_areas(
     assert min(county_coverage_canonical.values()) == 1.0
 
     # ensure every faf zone is covered
-    assert (set(faf5_regions_src["faf_zone"]) - set(faf_zone_to_county_canonical.keys())) == set()
+    assert (set(faf5_regions_src["FAF_Zone"]) - set(faf_zone_to_county_canonical.keys())) == set()
 
     # we relied on the index of the county geographic data to identify each county row - but, for usage with census data,
     # we serialize using the (STATEFP, COUNTYFP) code
