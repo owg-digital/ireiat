@@ -13,7 +13,7 @@ These modes are:
 1. **Truck**: ``faf5_truck_demand``
 2. **Rail**: ``faf5_rail_demand``
 3. **Water**: ``faf5_water_demand``
-4. **Other & Unknown**: ``faf5_other_and_unknow_demand``
+4. **Other & Unknown**: ``faf5_other_and_unknown_demand``
 
 Each dataset represents the total tons of demand between origin-destination pairs for that specific mode of transportation.
 
