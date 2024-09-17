@@ -10,7 +10,7 @@ narn_links_spec = dagster.AssetSpec(
         "filename": "narn_rail_links.zip",
         "source_path": "raw/",
         "dashboard_url": dagster.MetadataValue.url(
-            "https://stg-arcgisazurecdataprod.az.arcgis.com/exportfiles-273-8581/NTAD_North_American_Rail_Network_Lines_4887242439196784421.zip?sv=2018-03-28&sr=b&sig=jRmQ9mKX3nBDsW47G9ZD9JVNAO15qqtzsFQ%2B3LcZmuA%3D&se=2024-07-10T21%3A34%3A03Z&sp=r"
+            "https://hub.arcgis.com/api/download/v1/items/e143f436d4774402aa8cca1e663b1d24/shapefile?redirect=true&layers=0"
         ),
     },
 )

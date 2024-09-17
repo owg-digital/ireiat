@@ -11,7 +11,7 @@ faf5_regions_spec = dagster.AssetSpec(
         "filename": "faf5_regions.zip",
         "source_path": "raw/",
         "dashboard_url": dagster.MetadataValue.url(
-            "https://opendata.arcgis.com/api/v3/datasets/e3bcc5d26e5e42709e2bacd6fc37ab43_0/downloads/data?format=shp&spatialRefId=3857&where=1%3D1"
+            "https://hub.arcgis.com/api/download/v1/items/539fdab88ee74e38b28959494965ace2/shapefile?redirect=true&layers=0"
         ),
     },
 )
