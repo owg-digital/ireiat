@@ -125,6 +125,11 @@ def asset_spec_factory(spec: dagster.AssetSpec):
     )
     def _asset(context: dagster.AssetExecutionContext):
         result = read_or_attempt_download(spec.key, spec.metadata)
+
+        # TODO: Make adjustments downstream to expect lower case headers, then uncomment below:
+        # Convert all column names to lowercase to avoid case-sensitivity issues
+        # result = result.rename(columns=lambda x: x.lower())
+
         publish_metadata(context, result)
         return result
 
