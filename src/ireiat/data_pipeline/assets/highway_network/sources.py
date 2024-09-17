@@ -10,7 +10,7 @@ faf5_regions_spec = dagster.AssetSpec(
         "filename": "faf5_highway_links.zip",
         "source_path": "raw/",
         "dashboard_url": dagster.MetadataValue.url(
-            "https://opendata.arcgis.com/api/v3/datasets/cbfd7a1457d749ae865f9212c978c645_0/downloads/data?format=shp&spatialRefId=3857&where=1%3D1"
+            "https://hub.arcgis.com/api/download/v1/items/b33d6a096bb94ca6b5cf5d96bf68a682/shapefile?redirect=true&layers=0"
         ),
     },
 )

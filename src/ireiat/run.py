@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import subprocess
 from importlib import resources
 from pathlib import Path
@@ -20,6 +21,15 @@ logger = logging.getLogger(__name__)
 def cli(debug):
     logger.info(f"Debug mode is {'on' if debug else 'off'}")
     os.makedirs(CACHE_PATH, exist_ok=True)
+
+
+@cli.command()
+def clear_cache():
+    """Clears the local cache directory"""
+    result: str = input("Are you sure you want to clear the cache? [y/n] ")
+    if result.strip().lower() == "y":
+        logger.info(f"Deleting files at {CACHE_PATH}")
+        shutil.rmtree(CACHE_PATH)
 
 
 @cli.command()

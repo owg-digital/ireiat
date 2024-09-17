@@ -19,6 +19,16 @@ Application-specific commands
 Once the package is installed, any of these commands can be run with: :code:`irieat <cmd>` from the
 command line (where :code:`<cmd>` is one of the commands listed below).
 
+Clearing the local cache
+------------------------
+
+The data pipeline downloads file from publicly available sources and keeps
+them in a local cache. To delete the cache, including all intermediate artifacts, run the following:
+
+.. click:: ireiat.run:clear_cache
+  :prog: clear_cache
+  :nested: full
+
 Solving
 -------
 
