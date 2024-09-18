@@ -69,31 +69,28 @@ def faf5_demand_by_mode(
     mode_pivot_pdf["rail_pct"] = mode_pivot_pdf[FAFMode.RAIL] / mode_pivot_pdf["total_tons"]
     mode_pivot_pdf["water_pct"] = mode_pivot_pdf[FAFMode.WATER] / mode_pivot_pdf["total_tons"]
 
-    # Filter unknown origin/destination pairs that don't exist in known modes
-    valid_orig_dest_pairs = known_agg_pdf[["dms_orig", "dms_dest"]].drop_duplicates()
-
     # Calculate unique origin-destination pairs in unknown modes before filtering
     original_unknown_pairs = unknown_modes_pdf[["dms_orig", "dms_dest"]].drop_duplicates()
 
-    # Merge unknown modes with the known mode proportions, filter invalid pairs
-    unknown_modes_pdf = unknown_modes_pdf.merge(
+    # Perform an inner merge to filter valid origin-destination pairs and keep only common rows
+    common_modes_pdf = unknown_modes_pdf.merge(
         mode_pivot_pdf[["truck_pct", "rail_pct", "water_pct"]],
         on=["dms_orig", "dms_dest"],
-        how="left",
+        how="inner",
     )
 
-    # Filter unknown origin/destination pairs that don't exist in known modes by merging with valid pairs
-    unknown_modes_pdf = unknown_modes_pdf.merge(
-        valid_orig_dest_pairs, on=["dms_orig", "dms_dest"], how="inner"
+    # Calculate the set of valid origin-destination pairs
+    valid_orig_dest_pairs = set(
+        common_modes_pdf[["dms_orig", "dms_dest"]].drop_duplicates().apply(tuple, axis=1)
     )
 
-    # Calculate the dropped pairs
-    remaining_unknown_pairs = unknown_modes_pdf[["dms_orig", "dms_dest"]].drop_duplicates()
-    dropped_pairs_count = len(original_unknown_pairs) - len(remaining_unknown_pairs)
-
-    # TODO: Figure out a different way to handle FAF zone pairs that don't appear in other modes
+    # Get the set difference between original unknown origin-destination pairs and valid pairs
+    invalid_orig_dest_pairs = (
+        set(original_unknown_pairs.apply(tuple, axis=1)) - valid_orig_dest_pairs
+    )
 
     # Log a warning about the dropped origin-destination pairs
+    dropped_pairs_count = len(invalid_orig_dest_pairs)
     if dropped_pairs_count > 0:
         context.log.warning(
             f"{dropped_pairs_count} unique dms origin-destination pairs were dropped because they don't exist in the known (truck, rail, water) modes."
@@ -101,7 +98,7 @@ def faf5_demand_by_mode(
 
     # Process and re-aggregate unknown mode rows for truck, rail, and water based on their respective proportions
     truck_pdf = faf5_process_mode(
-        unknown_modes_pdf,
+        common_modes_pdf,
         known_modes_pdf,
         FAFMode.TRUCK.value,
         "truck_tons",
@@ -109,7 +106,7 @@ def faf5_demand_by_mode(
         FAF_TONS_TARGET_FIELD,
     )
     rail_pdf = faf5_process_mode(
-        unknown_modes_pdf,
+        common_modes_pdf,
         known_modes_pdf,
         FAFMode.RAIL.value,
         "rail_tons",
@@ -117,7 +114,7 @@ def faf5_demand_by_mode(
         FAF_TONS_TARGET_FIELD,
     )
     water_pdf = faf5_process_mode(
-        unknown_modes_pdf,
+        common_modes_pdf,
         known_modes_pdf,
         FAFMode.WATER.value,
         "water_tons",
