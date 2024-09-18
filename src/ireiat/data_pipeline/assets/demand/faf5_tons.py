@@ -11,54 +11,155 @@ from ireiat.config import (
     INTERMEDIATE_DIRECTORY_ARGS,
 )
 from ireiat.data_pipeline.metadata import publish_metadata
-from ireiat.util.faf_constants import FAFMode, FAFDemandByMode
+from ireiat.util.faf_constants import FAFMode
 
 
 @dagster.multi_asset(
     outs={
-        mode.value: dagster.AssetOut(
+        "faf5_truck_demand": dagster.AssetOut(
             io_manager_key="custom_io_manager",
             metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
-        )
-        for mode in FAFDemandByMode
+        ),
+        "faf5_rail_demand": dagster.AssetOut(
+            io_manager_key="custom_io_manager",
+            metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+        ),
+        "faf5_water_demand": dagster.AssetOut(
+            io_manager_key="custom_io_manager",
+            metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+        ),
     }
 )
 def faf5_demand_by_mode(
     context: dagster.AssetExecutionContext, faf5_demand_src: pd.DataFrame
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Multi-asset function to extract demand data for different transport modes (Truck, Rail, Water, Other/Unknown).
-    Currently, FAF containerizable demand is limited by commodity.
+    Multi-asset function to extract demand data for different transport modes (Truck, Rail, Water).
+    Rows with unknown modes are distributed proportionally based on known modes for each origin-destination pair.
     """
-
     # Filter for containerizable commodities
     is_containerizable = ~faf5_demand_src["sctg2"].isin(NON_CONTAINERIZABLE_COMMODITIES)
     faf_containerizable_pdf = faf5_demand_src.loc[is_containerizable]
 
-    # Initialize a list to store DataFrames for each mode
-    demand_dataframes = []
+    # Split into known modes (truck, rail, water) and unknown modes
+    known_modes_pdf = faf_containerizable_pdf[
+        faf_containerizable_pdf["dms_mode"].isin([FAFMode.TRUCK, FAFMode.RAIL, FAFMode.WATER])
+    ]
+    unknown_modes_pdf = faf_containerizable_pdf[
+        faf_containerizable_pdf["dms_mode"] == FAFMode.OTHER_AND_UNKNOWN
+    ]
 
-    # Loop through each mode and generate the corresponding demand DataFrame
-    for mode in FAFDemandByMode:
-        mode_str = mode.name  # e.g., "TRUCK", "RAIL"
+    # Aggregate by origin/destination for known modes
+    known_agg_pdf = known_modes_pdf.groupby(["dms_orig", "dms_dest", "dms_mode"], as_index=False)[
+        [FAF_TONS_TARGET_FIELD]
+    ].sum()
 
-        is_by_mode = faf_containerizable_pdf["dms_mode"] == FAFMode[mode_str]
-        faf_mode_pdf = faf_containerizable_pdf.loc[is_by_mode]
+    # Pivot by origin/destination to calculate percentages for each mode
+    mode_pivot_pdf = known_agg_pdf.pivot_table(
+        index=["dms_orig", "dms_dest"],
+        columns="dms_mode",
+        values=FAF_TONS_TARGET_FIELD,
+        fill_value=0,
+    )
 
-        # Group by origin and destination to calculate total tons
-        total_tons_od_pdf = faf_mode_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
-            [FAF_TONS_TARGET_FIELD]
-        ].sum()
+    # Add total tons and calculate percentages
+    mode_pivot_pdf["total_tons"] = mode_pivot_pdf.sum(axis=1)
+    mode_pivot_pdf["truck_pct"] = mode_pivot_pdf[FAFMode.TRUCK] / mode_pivot_pdf["total_tons"]
+    mode_pivot_pdf["rail_pct"] = mode_pivot_pdf[FAFMode.RAIL] / mode_pivot_pdf["total_tons"]
+    mode_pivot_pdf["water_pct"] = mode_pivot_pdf[FAFMode.WATER] / mode_pivot_pdf["total_tons"]
 
-        # Log and store the DataFrame, providing the correct output_name for multi-asset
-        context.log.info(f"{mode_str} mode demand generated with {len(total_tons_od_pdf)} records.")
-        publish_metadata(context, total_tons_od_pdf, output_name=mode.value)
+    # Filter unknown origin/destination pairs that don't exist in known modes
+    valid_orig_dest_pairs = known_agg_pdf[["dms_orig", "dms_dest"]].drop_duplicates()
 
-        # Append to the list in the order of the enum
-        demand_dataframes.append(total_tons_od_pdf)
+    # Calculate unique origin-destination pairs in unknown modes before filtering
+    original_unknown_pairs = unknown_modes_pdf[["dms_orig", "dms_dest"]].drop_duplicates()
 
-    # Return the dataframes in the same order as the enum
-    return tuple(demand_dataframes)
+    # Merge unknown modes with the known mode proportions, filter invalid pairs
+    unknown_modes_pdf = unknown_modes_pdf.merge(
+        mode_pivot_pdf[["truck_pct", "rail_pct", "water_pct"]],
+        on=["dms_orig", "dms_dest"],
+        how="left",
+    )
+
+    # Filter unknown origin/destination pairs that don't exist in known modes by merging with valid pairs
+    unknown_modes_pdf = unknown_modes_pdf.merge(
+        valid_orig_dest_pairs, on=["dms_orig", "dms_dest"], how="inner"
+    )
+
+    # Calculate the dropped pairs
+    remaining_unknown_pairs = unknown_modes_pdf[["dms_orig", "dms_dest"]].drop_duplicates()
+    dropped_pairs_count = len(original_unknown_pairs) - len(remaining_unknown_pairs)
+
+    # Log a warning about the dropped origin-destination pairs
+    if dropped_pairs_count > 0:
+        context.log.warning(
+            f"{dropped_pairs_count} unique dms origin-destination pairs were dropped because they don't exist in the known (truck, rail, water) modes."
+        )
+
+    # Explode unknown mode rows proportionally into truck, rail, water
+    unknown_modes_pdf["truck_tons"] = (
+        unknown_modes_pdf[FAF_TONS_TARGET_FIELD] * unknown_modes_pdf["truck_pct"]
+    )
+    unknown_modes_pdf["rail_tons"] = (
+        unknown_modes_pdf[FAF_TONS_TARGET_FIELD] * unknown_modes_pdf["rail_pct"]
+    )
+    unknown_modes_pdf["water_tons"] = (
+        unknown_modes_pdf[FAF_TONS_TARGET_FIELD] * unknown_modes_pdf["water_pct"]
+    )
+
+    # Append to the respective known mode DataFrames using pd.concat
+    truck_pdf = known_modes_pdf[known_modes_pdf["dms_mode"] == FAFMode.TRUCK].copy()
+    truck_pdf = pd.concat(
+        [
+            truck_pdf,
+            unknown_modes_pdf[["dms_orig", "dms_dest", "truck_tons"]].rename(
+                columns={"truck_tons": FAF_TONS_TARGET_FIELD}
+            ),
+        ]
+    )
+
+    rail_pdf = known_modes_pdf[known_modes_pdf["dms_mode"] == FAFMode.RAIL].copy()
+    rail_pdf = pd.concat(
+        [
+            rail_pdf,
+            unknown_modes_pdf[["dms_orig", "dms_dest", "rail_tons"]].rename(
+                columns={"rail_tons": FAF_TONS_TARGET_FIELD}
+            ),
+        ]
+    )
+
+    water_pdf = known_modes_pdf[known_modes_pdf["dms_mode"] == FAFMode.WATER].copy()
+    water_pdf = pd.concat(
+        [
+            water_pdf,
+            unknown_modes_pdf[["dms_orig", "dms_dest", "water_tons"]].rename(
+                columns={"water_tons": FAF_TONS_TARGET_FIELD}
+            ),
+        ]
+    )
+
+    # Re-aggregate at origin, destination, and tons level
+    truck_pdf = truck_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
+        FAF_TONS_TARGET_FIELD
+    ].sum()
+    rail_pdf = rail_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
+        FAF_TONS_TARGET_FIELD
+    ].sum()
+    water_pdf = water_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
+        FAF_TONS_TARGET_FIELD
+    ].sum()
+
+    # Log and store the DataFrames
+    context.log.info(f"Truck mode demand generated with {len(truck_pdf)} records.")
+    context.log.info(f"Rail mode demand generated with {len(rail_pdf)} records.")
+    context.log.info(f"Water mode demand generated with {len(water_pdf)} records.")
+
+    publish_metadata(context, truck_pdf, output_name="faf5_truck_demand")
+    publish_metadata(context, rail_pdf, output_name="faf5_rail_demand")
+    publish_metadata(context, water_pdf, output_name="faf5_water_demand")
+
+    # Return the dataframes in the same order as the hardcoded outs
+    return truck_pdf, rail_pdf, water_pdf
 
 
 @dagster.asset(
