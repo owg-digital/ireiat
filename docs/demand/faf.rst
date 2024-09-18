@@ -15,14 +15,14 @@ These modes are:
 3. **Water**: ``faf5_water_demand``
 
 Handling of Other & Unknown Modes
-=================================
+---------------------------------
 Rows with Other & Unknown modes are distributed proportionally across the Truck, Rail, and Water
 datasets based on the relative tonnage of known modes (truck, rail, water) for each origin-destination pair.
 This proportional allocation ensures that demand for unknown modes is captured according to the
 transportation patterns of known modes.
 
 Example Process
-===============
+~~~~~~~~~~~~~~~
 1. The dataset is first split into known modes (truck, rail, water) and unknown modes.
 2. For each origin-destination pair, the total demand for truck, rail, and water is calculated.
 3. Unknown mode demand is then allocated across truck, rail, and water in proportion to their existing tonnage for each origin-destination pair.
