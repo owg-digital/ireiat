@@ -11,6 +11,7 @@ from ireiat.config import (
     INTERMEDIATE_DIRECTORY_ARGS,
 )
 from ireiat.data_pipeline.metadata import publish_metadata
+from ireiat.data_pipeline.assets.demand.faf5_helpers import faf5_process_mode
 from ireiat.util.faf_constants import FAFMode
 
 
@@ -90,66 +91,41 @@ def faf5_demand_by_mode(
     remaining_unknown_pairs = unknown_modes_pdf[["dms_orig", "dms_dest"]].drop_duplicates()
     dropped_pairs_count = len(original_unknown_pairs) - len(remaining_unknown_pairs)
 
+    # TODO: Figure out a different way to handle FAF zone pairs that don't appear in other modes
+
     # Log a warning about the dropped origin-destination pairs
     if dropped_pairs_count > 0:
         context.log.warning(
             f"{dropped_pairs_count} unique dms origin-destination pairs were dropped because they don't exist in the known (truck, rail, water) modes."
         )
 
-    # Explode unknown mode rows proportionally into truck, rail, water
-    unknown_modes_pdf["truck_tons"] = (
-        unknown_modes_pdf[FAF_TONS_TARGET_FIELD] * unknown_modes_pdf["truck_pct"]
+    # Process and re-aggregate unknown mode rows for truck, rail, and water based on their respective proportions
+    truck_pdf = faf5_process_mode(
+        unknown_modes_pdf,
+        known_modes_pdf,
+        FAFMode.TRUCK.value,
+        "truck_tons",
+        "truck_pct",
+        FAF_TONS_TARGET_FIELD,
     )
-    unknown_modes_pdf["rail_tons"] = (
-        unknown_modes_pdf[FAF_TONS_TARGET_FIELD] * unknown_modes_pdf["rail_pct"]
+    rail_pdf = faf5_process_mode(
+        unknown_modes_pdf,
+        known_modes_pdf,
+        FAFMode.RAIL.value,
+        "rail_tons",
+        "rail_pct",
+        FAF_TONS_TARGET_FIELD,
     )
-    unknown_modes_pdf["water_tons"] = (
-        unknown_modes_pdf[FAF_TONS_TARGET_FIELD] * unknown_modes_pdf["water_pct"]
-    )
-
-    # Append to the respective known mode DataFrames using pd.concat
-    truck_pdf = known_modes_pdf[known_modes_pdf["dms_mode"] == FAFMode.TRUCK].copy()
-    truck_pdf = pd.concat(
-        [
-            truck_pdf,
-            unknown_modes_pdf[["dms_orig", "dms_dest", "truck_tons"]].rename(
-                columns={"truck_tons": FAF_TONS_TARGET_FIELD}
-            ),
-        ]
-    )
-
-    rail_pdf = known_modes_pdf[known_modes_pdf["dms_mode"] == FAFMode.RAIL].copy()
-    rail_pdf = pd.concat(
-        [
-            rail_pdf,
-            unknown_modes_pdf[["dms_orig", "dms_dest", "rail_tons"]].rename(
-                columns={"rail_tons": FAF_TONS_TARGET_FIELD}
-            ),
-        ]
+    water_pdf = faf5_process_mode(
+        unknown_modes_pdf,
+        known_modes_pdf,
+        FAFMode.WATER.value,
+        "water_tons",
+        "water_pct",
+        FAF_TONS_TARGET_FIELD,
     )
 
-    water_pdf = known_modes_pdf[known_modes_pdf["dms_mode"] == FAFMode.WATER].copy()
-    water_pdf = pd.concat(
-        [
-            water_pdf,
-            unknown_modes_pdf[["dms_orig", "dms_dest", "water_tons"]].rename(
-                columns={"water_tons": FAF_TONS_TARGET_FIELD}
-            ),
-        ]
-    )
-
-    # Re-aggregate at origin, destination, and tons level
-    truck_pdf = truck_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
-        FAF_TONS_TARGET_FIELD
-    ].sum()
-    rail_pdf = rail_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
-        FAF_TONS_TARGET_FIELD
-    ].sum()
-    water_pdf = water_pdf.groupby(["dms_orig", "dms_dest"], as_index=False)[
-        FAF_TONS_TARGET_FIELD
-    ].sum()
-
-    # Log and store the DataFrames
+    # Log and store the dataframes
     context.log.info(f"Truck mode demand generated with {len(truck_pdf)} records.")
     context.log.info(f"Rail mode demand generated with {len(rail_pdf)} records.")
     context.log.info(f"Water mode demand generated with {len(water_pdf)} records.")
