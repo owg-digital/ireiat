@@ -21,12 +21,20 @@ datasets based on the relative tonnage of known modes (truck, rail, water) for e
 This proportional allocation ensures that demand for unknown modes is captured according to the
 transportation patterns of known modes.
 
+County-to-County Processing
+---------------------------
+The demand data is processed to generate county-to-county origin-destination pairs for each mode of transportation
+(truck, rail, and water). This involves allocating FAF zone-level demand to counties using a predefined allocation map,
+calculating the tonnage for each origin-destination pair, and validating the results. The processed data is stored
+in separate DataFrames for each mode.
+
 Example Process
 ~~~~~~~~~~~~~~~
 1. The dataset is first split into known modes (truck, rail, water) and unknown modes.
 2. For each origin-destination pair, the total demand for truck, rail, and water is calculated.
 3. Unknown mode demand is then allocated across truck, rail, and water in proportion to their existing tonnage for each origin-destination pair.
-4. Finally, the recalculated demand for truck, rail, and water is aggregated to produce the final datasets.
+4. The recalculated demand for truck, rail, and water is aggregated to produce the final datasets.
+5. Each mode's dataset is then processed at the county level, generating county-to-county tonnage records.
 
 Each dataset represents the total tons of demand between origin-destination pairs for that specific mode of transportation,
 including any reassigned demand from unknown modes.
