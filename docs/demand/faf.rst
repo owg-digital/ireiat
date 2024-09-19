@@ -26,7 +26,7 @@ County-to-County Processing
 The demand data is processed to generate county-to-county origin-destination pairs for each mode of transportation
 (truck, rail, and water). This involves allocating FAF zone-level demand to counties using a predefined allocation map,
 calculating the tonnage for each origin-destination pair, and validating the results. The processed data is stored
-in separate DataFrames for each mode.
+in separate datasets for each mode.
 
 Example Process
 ~~~~~~~~~~~~~~~
