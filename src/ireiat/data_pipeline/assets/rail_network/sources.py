@@ -29,3 +29,18 @@ intermodal_terminals_spec = dagster.AssetSpec(
     },
 )
 intermodal_terminals_src = asset_spec_factory(intermodal_terminals_spec)
+
+rail_interchange_impedances_spec = dagster.AssetSpec(
+    key=dagster.AssetKey("rail_interchange_impedances_spec"),
+    description="YAML file containing rail interchange impedances",
+    metadata={
+        "format": "yaml",
+        "filename": "rail_interchange_impedances.yaml",
+        "source_path": "raw/",
+        "dashboard_url": dagster.MetadataValue.url(
+            # "https://raw.githubusercontent.com/owg-digital/ireiat/master/data/rail_network/rail_interchange_impedances.yaml"
+            "https://github.com/owg-digital/ireiat/blob/msm-interchange-impedance/data/rail_network/rail_interchange_impedances.yaml"
+        ),
+    },
+)
+rail_interchange_impedances_src = asset_spec_factory(rail_interchange_impedances_spec)
