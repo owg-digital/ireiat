@@ -23,8 +23,8 @@ transportation patterns of known modes.
 
 County-to-County Processing
 ---------------------------
-FAF5 demand is projected from FAF regions into counties proportional to U.S. Census population data. 
-This projection assumes a uniform distribution of population across the area of each county, 
+FAF5 demand is projected from FAF regions into counties proportional to U.S. Census population data.
+This projection assumes a uniform distribution of population across the area of each county,
 which is a critical assumption that could be improved in future iterations.
 
 .. note::
@@ -40,8 +40,8 @@ The key steps in the county-to-county processing workflow are as follows:
 4. **Allocate FAF Demand**: FAF demand is allocated into each county based on the proportion of the county's population relative to the total population of the FAF region.
 5. **Localize Demand in County Centroids**: The demand for each county is localized at a single geographic point—the county centroid—where all demand originates and terminates for each mode of transportation.
 
-This simple approach ensures that each county has a defined geographic point (the centroid) 
-where the demand originates or terminates, creating an easily explainable model for the allocation 
+This simple approach ensures that each county has a defined geographic point (the centroid)
+where the demand originates or terminates, creating an easily explainable model for the allocation
 of FAF5 demand at the county level.
 
 Example Process
@@ -51,6 +51,9 @@ Example Process
 3. Unknown mode demand is then allocated across truck, rail, and water in proportion to their existing tonnage for each origin-destination pair.
 4. The recalculated demand for truck, rail, and water is aggregated to produce the final datasets.
 5. Each mode's dataset is then processed at the county level, generating county-to-county tonnage records.
+
+Summary
+-------
 
 Each dataset represents the total tons of demand between origin-destination pairs for that specific mode of transportation,
 including any reassigned demand from unknown modes.
