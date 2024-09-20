@@ -45,7 +45,7 @@ where the demand originates or terminates, creating an easily explainable model 
 of FAF5 demand at the county level.
 
 Example Process
-~~~~~~~~~~~~~~~
+---------------
 1. The dataset is first split into known modes (truck, rail, water) and unknown modes.
 2. For each origin-destination pair, the total demand for truck, rail, and water is calculated.
 3. Unknown mode demand is then allocated across truck, rail, and water in proportion to their existing tonnage for each origin-destination pair.
