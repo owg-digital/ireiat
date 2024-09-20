@@ -23,10 +23,26 @@ transportation patterns of known modes.
 
 County-to-County Processing
 ---------------------------
-The demand data is processed to generate county-to-county origin-destination pairs for each mode of transportation
-(truck, rail, and water). This involves allocating FAF zone-level demand to counties using a predefined allocation map,
-calculating the tonnage for each origin-destination pair, and validating the results. The processed data is stored
-in separate datasets for each mode.
+FAF5 demand is projected from FAF regions into counties proportional to U.S. Census population data. 
+This projection assumes a uniform distribution of population across the area of each county, 
+which is a critical assumption that could be improved in future iterations.
+
+.. note::
+    There are other, more detailed options for projecting FAF demand into counties
+    and/or localizing the demand. However, our data pipeline has opted for a simple,
+    explainable process, especially for this initial release.
+
+The key steps in the county-to-county processing workflow are as follows:
+
+1. **Look Up Population Data**: The U.S. Census population data for each county is retrieved to serve as the basis for the demand projection.
+2. **Compute the Area of Each County**: For each county within a given FAF region, the area is computed to enable proportional allocation of demand.
+3. **Total Population Calculation**: The total population within each FAF region is computed, considering the uniform assumption of population distribution within counties.
+4. **Allocate FAF Demand**: FAF demand is allocated into each county based on the proportion of the county's population relative to the total population of the FAF region.
+5. **Localize Demand in County Centroids**: The demand for each county is localized at a single geographic point—the county centroid—where all demand originates and terminates for each mode of transportation.
+
+This simple approach ensures that each county has a defined geographic point (the centroid) 
+where the demand originates or terminates, creating an easily explainable model for the allocation 
+of FAF5 demand at the county level.
 
 Example Process
 ~~~~~~~~~~~~~~~
