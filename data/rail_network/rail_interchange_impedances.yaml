@@ -1,29 +1,39 @@
 # Data/rules for assigning impedances at rail interchanges
 
-# Defaults for interchanges not named in the rule 260 section
+# Defaults for interchanges not specified in the impedance_override_rules
 class1_to_class1_default_impedance: 1000
 class1_to_shortline_default_impedance: 350
 
-# Defaults by Rule 260 interchange
-impedance_by_rule_260_interchange: {
-    # for all nodes that
-    class1_to_class1_impedance: 250,
-    not_class1_to_class1_impedance: 275,
-    radius_to_search_miles: 20,
+# Defaults b interchange
+interchange_impedance_defaults:
+    # for all interchange nodes that are not explicitly or implicitly in the overrides
 
     # Rules:  need either the lat_long or the franodeids to specify where the
     #         the interchange occurs
     #         the jr260 name is optional
     #         the overrides is optional, and is a pair of rr's and impedance
     #         Interchange links will be checked to see if the override RR pair is valid
-    interchange_rules:
-      [
-        {
-          jr260: "BATON",
-          lat_long: [30.484715, -91.18676],
-          franodeids: [123456, 789012],
-          overrides: { "CN,CPKC": 249, "CSXT,CN": 251 },
-        },
-        { jr260: "BUFF", "lat_long": [42.8827172727273, -78.8435945454545] },
-      ],
-  }
+
+
+impedance_override_rules:
+  # The next 3 fields must be present:
+  #  class1_to_class1_impedance, not_class1_to_class1_impedance, radius_to_search_miles
+
+  - class1_to_class1_impedance:     250
+  - not_class1_to_class1_impedance: 275
+  - radius_to_search_miles:          20,
+
+  # all the interchanges that will not have the default impedances are in this section
+  - overrides:
+    # Rules:  need either the lat_long or the franodeids to specify where the
+    #         the interchange occurs
+    #         the jr260 name is optional
+    #         the overrides is optional, and is a pair of rr's and impedance
+    #         Interchange links will be checked to see if the override RR pair is valid    
+    - jr260: "BATON"
+      lat_long: [30.484715, -91.18676]
+      franodeids: [123456, 789012]
+      overrides: { "CN,CPKC": 249, "CSXT,CN": 251 }
+
+    - jr260: "BUFF"
+      lat_long: [42.8827172727273, -78.8435945454545]
