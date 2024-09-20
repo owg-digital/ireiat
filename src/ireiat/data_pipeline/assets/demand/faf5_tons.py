@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import Dict, Tuple
 
 import dagster
@@ -11,7 +10,10 @@ from ireiat.config import (
     INTERMEDIATE_DIRECTORY_ARGS,
 )
 from ireiat.data_pipeline.metadata import publish_metadata
-from ireiat.data_pipeline.assets.demand.faf5_helpers import faf5_process_mode
+from ireiat.data_pipeline.assets.demand.faf5_helpers import (
+    faf5_process_mode,
+    faf5_compute_county_tons_for_mode,
+)
 from ireiat.util.faf_constants import FAFMode
 
 
@@ -135,37 +137,75 @@ def faf5_demand_by_mode(
     return truck_pdf, rail_pdf, water_pdf
 
 
-@dagster.asset(
-    io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+@dagster.multi_asset(
+    outs={
+        "county_to_county_highway_tons": dagster.AssetOut(
+            io_manager_key="custom_io_manager",
+            metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+        ),
+        "county_to_county_rail_tons": dagster.AssetOut(
+            io_manager_key="custom_io_manager",
+            metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+        ),
+        "county_to_county_marine_tons": dagster.AssetOut(
+            io_manager_key="custom_io_manager",
+            metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
+        ),
+    }
 )
-def county_to_county_highway_tons(
+def county_to_county_tons(
     context: dagster.AssetExecutionContext,
     faf5_truck_demand: pd.DataFrame,
+    faf5_rail_demand: pd.DataFrame,
+    faf5_water_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
-) -> pd.DataFrame:
-    """(State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons"""
-    county_od: Dict[Tuple[str, str, str, str], float] = defaultdict(float)
-    for row in faf5_truck_demand.itertuples():
-        constituent_orig_counties_map = faf_id_to_county_id_allocation_map[row.dms_orig]
-        constituent_dest_counties_map = faf_id_to_county_id_allocation_map[row.dms_dest]
-        for (state_orig, county_orig), pct_in_county_orig in constituent_orig_counties_map.items():
-            for (
-                state_dest,
-                county_dest,
-            ), pct_in_county_dest in constituent_dest_counties_map.items():
-                tons = getattr(row, FAF_TONS_TARGET_FIELD) * pct_in_county_orig * pct_in_county_dest
-                county_od[(state_orig, county_orig, state_dest, county_dest)] += tons
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Multi-asset function to calculate (State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons
+    for truck, rail, and water modes based on county allocation percentages.
+    """
 
-    assert (
-        abs(faf5_truck_demand[FAF_TONS_TARGET_FIELD].sum() - sum(county_od.values()))
-        < SUM_TONS_TOLERANCE
+    # Process county tons for truck, rail, and water modes
+    non_zero_truck_county_od_pdf = faf5_compute_county_tons_for_mode(
+        faf5_truck_demand,
+        faf_id_to_county_id_allocation_map,
+        FAF_TONS_TARGET_FIELD,
+        SUM_TONS_TOLERANCE,
+        "Truck",
+    )
+    non_zero_rail_county_od_pdf = faf5_compute_county_tons_for_mode(
+        faf5_rail_demand,
+        faf_id_to_county_id_allocation_map,
+        FAF_TONS_TARGET_FIELD,
+        SUM_TONS_TOLERANCE,
+        "Rail",
+    )
+    non_zero_water_county_od_pdf = faf5_compute_county_tons_for_mode(
+        faf5_water_demand,
+        faf_id_to_county_id_allocation_map,
+        FAF_TONS_TARGET_FIELD,
+        SUM_TONS_TOLERANCE,
+        "Water",
     )
 
-    county_od_pdf = pd.DataFrame(
-        [(*k, v) for k, v in county_od.items()],
-        columns=["state_orig", "county_orig", "state_dest", "county_dest", "tons"],
+    # Log and store the dataframes
+    context.log.info(
+        f"Truck mode county-to-county demand generated with {len(non_zero_truck_county_od_pdf)} records."
     )
-    non_zero_county_od_pdf = county_od_pdf.loc[county_od_pdf["tons"] > 0].sort_values("tons")
-    publish_metadata(context, non_zero_county_od_pdf)
-    return non_zero_county_od_pdf
+    context.log.info(
+        f"Rail mode county-to-county demand generated with {len(non_zero_rail_county_od_pdf)} records."
+    )
+    context.log.info(
+        f"Water mode county-to-county demand generated with {len(non_zero_water_county_od_pdf)} records."
+    )
+
+    publish_metadata(
+        context, non_zero_truck_county_od_pdf, output_name="county_to_county_highway_tons"
+    )
+    publish_metadata(context, non_zero_rail_county_od_pdf, output_name="county_to_county_rail_tons")
+    publish_metadata(
+        context, non_zero_water_county_od_pdf, output_name="county_to_county_marine_tons"
+    )
+
+    # Return dataframes for each mode
+    return non_zero_truck_county_od_pdf, non_zero_rail_county_od_pdf, non_zero_water_county_od_pdf
