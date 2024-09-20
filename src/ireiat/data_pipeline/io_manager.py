@@ -8,6 +8,7 @@ import dagster
 import geopandas
 import pandas as pd
 import pyogrio
+import yaml
 
 from ireiat.config import CACHE_PATH
 from ireiat.data_pipeline.metadata import publish_metadata
@@ -79,6 +80,14 @@ def read_or_attempt_download(
 
     # figure out how to read this based on the ending
     fmt = fpath.split(".")[-1]
+
+    # TODO: (Marc) Quick fix to read in yaml files. Needs to be better integrated
+    if fmt == "yaml":
+
+        with open(fpath, "r") as yml:
+            result = yaml.safe_load(yml)
+            return result
+
     read_func = _get_read_function(fmt, current_asset_metadata)
 
     return read_func(fpath, **parsed_read_kwargs)
@@ -102,6 +111,9 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
             obj.to_csv(fpath, **parsed_write_kwargs)
         elif fmt == "zip":
             context.log.info("Assuming zip file from download. Skipping persistence.")
+        # TODO: (Marc) Quick fix to read in yaml files. Needs to be better integrated
+        elif fmt == "yaml":
+            context.log.info("Assuming yaml file from download. Skipping persistence.")
         else:
             raise NotImplementedError(f"Cannot read file of type {fmt}!")
 
@@ -129,6 +141,10 @@ def asset_spec_factory(spec: dagster.AssetSpec):
         # TODO: Make adjustments downstream to expect lower case headers, then uncomment below:
         # Convert all column names to lowercase to avoid case-sensitivity issues
         # result = result.rename(columns=lambda x: x.lower())
+
+        # TODO: (Marc) Quick fix to read in yaml files. Needs to be better integrated
+        if isinstance(result, dict):
+            return result
 
         publish_metadata(context, result)
         return result

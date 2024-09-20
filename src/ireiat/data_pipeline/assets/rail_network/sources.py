@@ -39,7 +39,7 @@ rail_interchange_impedances_spec = dagster.AssetSpec(
         "source_path": "raw/",
         "dashboard_url": dagster.MetadataValue.url(
             # "https://raw.githubusercontent.com/owg-digital/ireiat/master/data/rail_network/rail_interchange_impedances.yaml"
-            "https://github.com/owg-digital/ireiat/blob/msm-interchange-impedance/data/rail_network/rail_interchange_impedances.yaml"
+            "https://raw.githubusercontent.com/owg-digital/ireiat/msm-interchange-impedance/data/rail_network/rail_interchange_impedances.yaml"
         ),
     },
 )

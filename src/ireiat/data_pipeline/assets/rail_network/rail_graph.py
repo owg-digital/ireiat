@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Set, Dict, Tuple, List
+from typing import Set, Dict, Tuple, List, Optional
 
 import dagster
 import geopandas
@@ -225,6 +225,19 @@ def impedance_rail_graph(
     context.log.info(f"Graph has {len(g.vs)} nodes and {len(g.es)} edges.")
     assert g.is_connected()
     return g
+
+
+# TODO: Marc's code goes here
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
+def marcs_function(
+    context: dagster.AssetExecutionContext,
+    impedance_rail_graph: ig.Graph,
+    rail_interchange_impedances_src: dict,
+) -> Optional[ig.Graph]:
+
+    context.log.info(f"Rail Interchange Impedances: {rail_interchange_impedances_src}")
+
+    return None
 
 
 @dagster.asset(
