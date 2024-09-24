@@ -8,6 +8,29 @@ from sklearn.neighbors import BallTree
 from ireiat.config import EXCLUDED_FIPS_CODES_MAP, LATLONG_CRS, ALBERS_CRS, RADIUS_EARTH_MILES
 
 
+def _generate_network_indices_from_ball_tree(
+    context: dagster.AssetExecutionContext,
+    county_centroids: Dict[Tuple[str, str], Tuple[float, float]],
+    bt: BallTree,
+) -> Dict[Tuple[str, str], int]:
+    """Helper function for assets"""
+    centroid_radians = np.deg2rad(np.array(np.array(list(county_centroids.values()))))
+    distances_radians, centroid_idx_to_network_node_idx = bt.query(centroid_radians, k=1)
+    distances_miles = distances_radians.squeeze() * RADIUS_EARTH_MILES
+    centroid_idx_to_network_node_idx = (
+        centroid_idx_to_network_node_idx.squeeze()
+    )  # make a 1-D array
+
+    context.log.info(f"Total node indices: {len(centroid_idx_to_network_node_idx)}")
+    context.log.info(f"Unique node indices: {len(set(centroid_idx_to_network_node_idx))}")
+    context.log.info(
+        "If these aren't the same, then (state,county) combos point to the same network node, fyi"
+    )
+    context.log.info(f"Max distance a node is: {max(distances_miles)} miles")
+
+    return {k: int(v) for k, v in zip(county_centroids.keys(), centroid_idx_to_network_node_idx)}
+
+
 @dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def county_fips_to_centroid(
     us_county_shp_files_src: geopandas.GeoDataFrame,
@@ -35,18 +58,18 @@ def county_fips_to_highway_network_node_idx(
     highway_ball_tree: BallTree,
 ) -> Dict[Tuple[str, str], int]:
     """Map all county centroids to the nearest highway nodes returning a dict of (STATE, COUNTY) -> highway node"""
-
-    centroid_radians = np.deg2rad(np.array(np.array(list(county_fips_to_centroid.values()))))
-    distances_radians, centroid_idx_to_hwy_node_idx = highway_ball_tree.query(centroid_radians, k=1)
-    distances_miles = distances_radians.squeeze() * RADIUS_EARTH_MILES
-    centroid_idx_to_hwy_node_idx = centroid_idx_to_hwy_node_idx.squeeze()  # make a 1-D array
-
-    context.log.info(f"Total highway node indices: {len(centroid_idx_to_hwy_node_idx)}")
-    context.log.info(f"Unique highway node indices: {len(set(centroid_idx_to_hwy_node_idx))}")
-    context.log.info(
-        "If these aren't the same, then some (state,county) combos point to the same highway "
-        "node...which is okay"
+    return _generate_network_indices_from_ball_tree(
+        context, county_fips_to_centroid, highway_ball_tree
     )
-    context.log.info(f"Max distance a highway node is: {max(distances_miles)} miles")
 
-    return {k: int(v) for k, v in zip(county_fips_to_centroid.keys(), centroid_idx_to_hwy_node_idx)}
+
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
+def county_fips_to_marine_network_node_idx(
+    context: dagster.AssetExecutionContext,
+    county_fips_to_centroid: Dict[Tuple[str, str], Tuple[float, float]],
+    marine_ball_tree: BallTree,
+) -> Dict[Tuple[str, str], int]:
+    """Map all county centroids to the nearest marine nodes returning a dict of (STATE, COUNTY) -> marine node"""
+    return _generate_network_indices_from_ball_tree(
+        context, county_fips_to_centroid, marine_ball_tree
+    )
