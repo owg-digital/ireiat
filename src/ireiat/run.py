@@ -38,7 +38,7 @@ def clear_cache():
     "-n",
     type=click.Path(exists=True),
     help="A parquet file that represents the network to be used for the TAP",
-    default=CACHE_PATH / INTERMEDIATE_PATH / "tap_network_dataframe.parquet",
+    default=CACHE_PATH / INTERMEDIATE_PATH / "tap_highway_network_dataframe.parquet",
 )
 @click.option(
     "--od-file",

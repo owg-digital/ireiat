@@ -15,10 +15,10 @@ max_gap <- as.numeric(args[4])
 
 # print data about read files
 od_df <- read_parquet(od_file)
-sprintf("Number of rows in O-D file: %s", nrow(od_df))
+print(sprintf("Number of rows in O-D file: %s", nrow(od_df)))
 
 network_df <- read_parquet(network_file)
-sprintf("Number of rows in network file: %s", nrow(network_df))
+print(sprintf("Number of rows in network file: %s", nrow(network_df)))
 
 sgr <- makegraph(df = network_df[,c("tail", "head", "fft")],
                  directed = TRUE,
@@ -31,4 +31,4 @@ traffic <- assign_traffic(Graph = sgr,  from = od_df$from, to = od_df$to, demand
 print("Successfully solved.")
 output_path <- file.path(cache_path,"traffic.parquet")
 write_parquet(traffic$data,output_path)
-sprintf("Written to %s", output_path)
+print(sprintf("Written to %s", output_path))

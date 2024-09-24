@@ -71,7 +71,7 @@ class PostProcessor:
         # read the network
         logger.info("Reading network data")
         faf5_links_gdf = pyogrio.read_dataframe(self._faf5_highway_network_path, use_arrow=True)
-
+        faf5_links_gdf = faf5_links_gdf.rename({"ID": "id"}, axis="columns")
         flows_with_geometry = (
             faf5_links_gdf[["id", "geometry"]].set_index("id").join(grouped_traffic, how="inner")
         )
@@ -84,8 +84,8 @@ class PostProcessor:
         fig, ax = plt.subplots(figsize=(15, 8))
         flows_with_geometry.plot(ax=ax, color="grey", alpha=0.2)
         non_zero_utilization.plot(ax=ax, colors=plt.cm.YlOrRd(non_zero_utilization["utilization"]))
-        ax.set_xlim(-1.4e7, -0.7e7)
-        ax.set_ylim(2.5e6, 6.5e6)
+        ax.set_xlim(-130, -60)
+        ax.set_ylim(23, 50)
         plt.tight_layout()
         plt.savefig(self.artifact_output_path / "traffic.png")
         logger.info(f"Plots saved to {self.artifact_output_path}")

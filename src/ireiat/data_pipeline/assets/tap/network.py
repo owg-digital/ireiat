@@ -23,6 +23,8 @@ def tap_highway_network_dataframe(
     tap_network["speed"] = tap_network["speed"].fillna(
         tap_network["speed"].mean()
     )  # fill in any null speeds
+    # replace any zero speeds with the mean speed
+    tap_network["speed"] = tap_network["speed"].replace(0, tap_network["speed"].mean())
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
     tap_network["beta"] = CONFIG.HIGHWAY_BETA
     tap_network["alpha"] = CONFIG.HIGHWAY_ALPHA
