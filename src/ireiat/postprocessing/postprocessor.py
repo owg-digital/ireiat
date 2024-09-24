@@ -17,7 +17,7 @@ class PostProcessor:
 
     _tap_solution_path: Path
     _strongly_connected_graph_path: Path
-    _faf5_highway_network_path: Path
+    _shp_file_path: Path
     _solution_output_artifacts: Path = None
 
     @property
@@ -32,11 +32,11 @@ class PostProcessor:
         self,
         tap_solution_path: Path,
         strongly_connected_graph_path: Path,
-        faf5_highway_network_path: Path,
+        shp_file_path: Path,
     ):
         self._tap_solution_path = tap_solution_path
         self._strongly_connected_graph_path = strongly_connected_graph_path
-        self._faf5_highway_network_path = faf5_highway_network_path
+        self._shp_file_path = shp_file_path
 
     def _generate_congestion_png(self):
         logger.info("Reading solution and graph data")
@@ -49,31 +49,35 @@ class PostProcessor:
             strongly_connected_highway_graph = pickle.load(fp)
 
         # we need to be careful about the order here. the solution (of edges) may be in a different order,
-        # so we need to get the original_faf_link_id of the edge on the network...and then join that data
+        # so we need to get the original_id of the edge on the network...and then join that data
         # into the solution
-        edge_to_faf_link_id = {
+        edge_to_shp_file_link_id = {
             (es.source, es.target): es["original_id"] for es in strongly_connected_highway_graph.es
         }
 
-        # map the edge (source_vertex, destination_vertex) to the original faf edge id, which is stored in the graph
-        faf_link_ids = [
-            edge_to_faf_link_id[(row._1, row.to)] for row in traffic[["from", "to"]].itertuples()
+        # map the edge (source_vertex, destination_vertex) to the original shp edge id, which is stored in the graph
+        shp_link_ids = [
+            edge_to_shp_file_link_id[(row._1, row.to)]
+            for row in traffic[["from", "to"]].itertuples()
         ]
 
-        traffic["faf_link_id"] = faf_link_ids
+        traffic["shp_link_id"] = shp_link_ids
 
         # this is a bit of a fudge in that the utilization on the same road (2 way) could be far above the capacity...
         # ideally we would set the capacity on each directed segment and sum the flows and capacities and then divide...
         logger.info("Computing utilization")
         traffic["utilization"] = traffic["flow"] / traffic["capacity"]
-        grouped_traffic = traffic.groupby("faf_link_id")[["utilization"]].sum()
+        grouped_traffic = traffic.groupby("shp_link_id")[["utilization"]].sum()
 
         # read the network
         logger.info("Reading network data")
-        faf5_links_gdf = pyogrio.read_dataframe(self._faf5_highway_network_path, use_arrow=True)
-        faf5_links_gdf = faf5_links_gdf.rename({"ID": "id"}, axis="columns")
+        shp_file_gdf = pyogrio.read_dataframe(self._shp_file_path, use_arrow=True)
+        if "id" not in shp_file_gdf.columns:
+            shp_file_gdf["id"] = shp_file_gdf.index
+        else:
+            shp_file_gdf = shp_file_gdf.rename({"ID": "id"}, axis="columns")
         flows_with_geometry = (
-            faf5_links_gdf[["id", "geometry"]].set_index("id").join(grouped_traffic, how="inner")
+            shp_file_gdf[["id", "geometry"]].set_index("id").join(grouped_traffic, how="inner")
         )
 
         # all grouped traffic (and associated edges) are found within the FAF data

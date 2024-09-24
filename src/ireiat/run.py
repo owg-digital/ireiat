@@ -48,9 +48,16 @@ def clear_cache():
     default=CACHE_PATH / INTERMEDIATE_PATH / "tap_highway_tons.parquet",
 )
 @click.option(
+    "--output-file",
+    "-o",
+    type=click.STRING,
+    help="A parquet file to which the TAP results will be written",
+    default=CACHE_PATH / "highway_traffic.parquet",
+)
+@click.option(
     "--max-gap", "-g", type=float, default=1e-8, help="The relative gap used in Algorithm B"
 )
-def solve(network_file: Path, od_file: Path, max_gap: float):
+def solve(network_file: Path, od_file: Path, max_gap: float, output_file: str):
     """Runs the TAP solution in R using cppRouting"""
 
     # use the bundled 'tap.r' file as a "resource" and create a temporary file to be run by RScript
@@ -60,7 +67,7 @@ def solve(network_file: Path, od_file: Path, max_gap: float):
             tf.write(r_text.read())
 
     # pass the command for the RScript file
-    cmd = ["Rscript", tf.name, network_file, od_file, CACHE_PATH, str(max_gap)]
+    cmd = ["Rscript", tf.name, network_file, od_file, CACHE_PATH, str(max_gap), output_file]
     logger.debug(f"About to run {cmd}")
     subprocess.call(cmd, shell=True, universal_newlines=True)
     temporary_file_path.unlink(missing_ok=True)
@@ -72,7 +79,7 @@ def solve(network_file: Path, od_file: Path, max_gap: float):
     "-s",
     type=click.Path(exists=True),
     help="Solution file representing assigned traffic",
-    default=CACHE_PATH / "traffic.parquet",
+    default=CACHE_PATH / "highway_traffic.parquet",
 )
 @click.option(
     "--solution-graph",
