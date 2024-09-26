@@ -1,7 +1,10 @@
+from typing import Dict, Tuple
+
 import dagster
 import geopandas
-import pandas as pd
 import igraph as ig
+import pandas as pd
+
 from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS, ALBERS_CRS, METERS_PER_MILE
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import (
@@ -9,7 +12,6 @@ from ireiat.util.graph import (
     generate_zero_based_node_maps,
     get_allowed_node_indices,
 )
-from typing import Dict, Tuple
 
 
 @dagster.asset(
@@ -31,26 +33,15 @@ def undirected_marine_edges(
 
 
 @dagster.asset(io_manager_key="default_io_manager_intermediate_path")
-def complete_marine_node_to_idx(undirected_marine_edges: pd.DataFrame):
-    """Generate unique nodes->indices based on the entire marine network"""
-    return generate_zero_based_node_maps(undirected_marine_edges)
-
-
-@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
-def complete_marine_idx_to_node(complete_marine_node_to_idx):
-    """Generates unique indices->nodes based on the entire marine network"""
-    return {v: k for k, v in complete_marine_node_to_idx.items()}
-
-
-@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def strongly_connected_marine_graph(
-    context: dagster.AssetExecutionContext,
-    undirected_marine_edges: pd.DataFrame,
-    complete_marine_node_to_idx: Dict[Tuple[float, float], int],
+    context: dagster.AssetExecutionContext, undirected_marine_edges: pd.DataFrame
 ) -> ig.Graph:
     """iGraph object representing a strongly connected, directed graph based on the marine network"""
     edge_tuples = []
     edge_attributes = []
+    complete_marine_node_to_idx: Dict[Tuple[float, float], int] = generate_zero_based_node_maps(
+        undirected_marine_edges
+    )
 
     for idx, row in enumerate(undirected_marine_edges.itertuples()):
         origin_coords = (row.origin_latitude, row.origin_longitude)
@@ -64,8 +55,8 @@ def strongly_connected_marine_graph(
         edge_tuples.append((head, tail))
 
         # Duplicate attributes for both directions
-        edge_attributes.append((row.distance_miles, idx))
-        edge_attributes.append((row.distance_miles, idx))
+        edge_attributes.append((row.distance_miles, idx, origin_coords, destination_coords))
+        edge_attributes.append((row.distance_miles, idx, destination_coords, origin_coords))
 
     # generate a graph from all nodes
     n_vertices = len(complete_marine_node_to_idx)
@@ -73,10 +64,11 @@ def strongly_connected_marine_graph(
     g = ig.Graph(
         n_vertices,
         edge_tuples,
-        vertex_attrs={"original_node_idx": list(complete_marine_node_to_idx.values())},
         edge_attrs={
             "length": [attr[0] for attr in edge_attributes],
             "original_id": [attr[1] for attr in edge_attributes],
+            "origin_coords": [attr[2] for attr in edge_attributes],
+            "destination_coords": [attr[3] for attr in edge_attributes],
         },
         directed=True,
     )
@@ -97,11 +89,23 @@ def marine_network_dataframe(
 ) -> pd.DataFrame:
     """Returns a dataframe of graph edges along with attributes needed to solve the TAP"""
     connected_edge_tuples = [
-        (e.source, e.target, e["length"]) for e in strongly_connected_marine_graph.es
+        (e.source, e.target, e["length"], *e["origin_coords"], *e["destination_coords"])
+        for e in strongly_connected_marine_graph.es
     ]
 
     # create and return a dataframe
-    pdf = pd.DataFrame(connected_edge_tuples, columns=["tail", "head", "length"])
+    pdf = pd.DataFrame(
+        connected_edge_tuples,
+        columns=[
+            "tail",
+            "head",
+            "length",
+            "origin_latitude",
+            "origin_longitude",
+            "destination_latitude",
+            "destination_longitude",
+        ],
+    )
     context.log.info(f"Marine network dataframe created with {len(pdf)} edges.")
     publish_metadata(context, pdf)
     return pdf

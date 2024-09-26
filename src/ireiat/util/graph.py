@@ -6,6 +6,7 @@ import geopandas
 import igraph as ig
 import numpy as np
 import pandas as pd
+from sklearn.neighbors import BallTree
 
 from ireiat.config import LATLONG_CRS
 
@@ -73,3 +74,25 @@ def get_allowed_node_indices(g: ig.Graph) -> List[int]:
         )
     )
     return allowed_node_indices
+
+
+def generate_ball_tree(pdf: pd.DataFrame) -> BallTree:
+    """Generates a ball tree assuming the data has the form tail|head|origin|destination"""
+    # stack unique origins / destinations by lat/long
+    origins = pdf[["tail", "origin_latitude", "origin_longitude"]].drop_duplicates()
+    destinations = pdf[["head", "destination_latitude", "destination_longitude"]].drop_duplicates()
+    origins = origins.rename(
+        {"tail": "node", "origin_latitude": "latitude", "origin_longitude": "longitude"},
+        axis="columns",
+    )
+    destinations = destinations.rename(
+        {"head": "node", "destination_latitude": "latitude", "destination_longitude": "longitude"},
+        axis="columns",
+    )
+
+    # order all nodes
+    all_nodes = pd.concat([origins, destinations]).drop_duplicates().sort_values("node")
+    # make sure the node order is continuous
+    assert all_nodes["node"].max() == len(all_nodes) - 1
+    node_lat_long_radians = np.deg2rad(np.array(all_nodes[["latitude", "longitude"]]))
+    return BallTree(node_lat_long_radians, metric="haversine")

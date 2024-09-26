@@ -6,7 +6,7 @@ from ..config import CACHE_PATH, INTERMEDIATE_PATH
 
 # demand
 demand_assets = dagster.load_assets_from_package_module(demand, group_name="demand")
-demand_assets_job = dagster.define_asset_job(name="highway_demand_job")
+demand_assets_job = dagster.define_asset_job(name="demand_job")
 
 # highway network
 highway_network_assets = dagster.load_assets_from_package_module(
