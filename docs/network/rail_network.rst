@@ -49,15 +49,14 @@ Assumptions
 
 1. **Speed**: Default rail speed is set to 20 miles per hour (mph).
 
-2. **Capacity**: For intermodal terminal links, the capacity is set to 100,000 tons to reflect the higher throughput 
+2. **Capacity**: For intermodal terminal links, the capacity is set to 100,000 tons to reflect the higher throughput
    of intermodal operations. For standard rail links, the capacity is set to 60,000 tons.
 
-3. **Congestion Parameters (Alpha and Beta)**: For **intermodal terminal links**, we use **alpha = 1** and **beta = 1**, 
-   assuming that congestion is mostly capacity-based and linear. For **standard rail links**, we use **alpha = 0.1** and 
+3. **Congestion Parameters (Alpha and Beta)**: For **intermodal terminal links**, we use **alpha = 1** and **beta = 1**,
+   assuming that congestion is mostly capacity-based and linear. For **standard rail links**, we use **alpha = 0.1** and
    **beta = 3.5** to account for less sensitivity to congestion compared to roads but still reflecting some non-linear impacts.
 
-4. **Free-Flow Travel Time (fft)**: This is calculated as the ratio of link length to speed, representing the time it 
+4. **Free-Flow Travel Time (fft)**: This is calculated as the ratio of link length to speed, representing the time it
    takes to traverse a link under ideal conditions.
 
 ..  image:: ../_static/network/rail/tap_rail_network_example.png
-

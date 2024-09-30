@@ -1,5 +1,5 @@
 from itertools import chain
-from typing import Set, Dict, Tuple, List
+from typing import Set, Dict, Tuple, List, Optional
 
 import dagster
 import geopandas
@@ -90,7 +90,7 @@ def owner_rationalized_rail_links(
             filtered_and_processed_rail_network_links[SEPARATION_ATTRIBUTE_NAME].values
         )
     )
-    edge_list_by_owner: Dict[str, Set[int]] = {k: set() for k in unique_owners_across_edges}
+    edge_list_by_owner: dict[str, set[int]] = {k: set() for k in unique_owners_across_edges}
     for row in filtered_and_processed_rail_network_links.itertuples():
         for k in getattr(row, SEPARATION_ATTRIBUTE_NAME):
             edge_list_by_owner[k].add(row.Index)
@@ -165,7 +165,7 @@ def complete_rail_idx_to_node(complete_rail_node_to_idx):
 def strongly_connected_rail_graph(
     context: dagster.AssetExecutionContext,
     undirected_rail_edges: pd.DataFrame,
-    complete_rail_node_to_idx: Dict[Tuple[float, float], int],
+    complete_rail_node_to_idx: Dict[Tuple[float, float], int]
 ) -> ig.Graph:
     """iGraph object representing a strongly connected, directed graph based on the rail network"""
     # generate directed edges from the undirected edges based on the "dir" field
@@ -196,7 +196,8 @@ def strongly_connected_rail_graph(
     g = ig.Graph(
         n_vertices,
         edge_tuples,
-        vertex_attrs={"original_node_idx": list(complete_rail_node_to_idx.values())},
+        vertex_attrs={"original_node_idx": list(complete_rail_node_to_idx.values()),
+                      "lat_long": list(complete_rail_node_to_idx.keys())},
         edge_attrs={
             "length": [attr[0] for attr in edge_attributes],
             "owners": [attr[2] for attr in edge_attributes],
@@ -219,12 +220,29 @@ def strongly_connected_rail_graph(
 def impedance_rail_graph(
     context: dagster.AssetExecutionContext,
     strongly_connected_rail_graph: ig.Graph,
+    rail_interchange_impedances_src: dict
 ) -> ig.Graph:
     """iGraph object representing the impedance network, derived from the rail network"""
-    g = generate_impedance_graph(strongly_connected_rail_graph, SEPARATION_ATTRIBUTE_NAME)
+    g = generate_impedance_graph(context,
+                                 strongly_connected_rail_graph,
+                                 rail_interchange_impedances_src,
+                                 SEPARATION_ATTRIBUTE_NAME)
     context.log.info(f"Graph has {len(g.vs)} nodes and {len(g.es)} edges.")
     assert g.is_connected()
     return g
+
+
+# TODO: Marc's code goes here
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
+def marcs_function(
+    context: dagster.AssetExecutionContext,
+    impedance_rail_graph: ig.Graph,
+    rail_interchange_impedances_src: dict,
+) -> Optional[ig.Graph]:
+
+    context.log.info(f"Rail Interchange Impedances: {rail_interchange_impedances_src}")
+
+    return None
 
 
 @dagster.asset(
