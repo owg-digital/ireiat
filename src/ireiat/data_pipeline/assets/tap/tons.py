@@ -81,26 +81,6 @@ def _filter_tons_dataframe(
     io_manager_key="custom_io_manager",
     metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
 )
-def in_network_highway_tons(
-    context: dagster.AssetExecutionContext, county_to_county_highway_tons: pd.DataFrame
-) -> pd.DataFrame:
-    """Creates a file representing a subset of highway OD tons to consider in the TAP"""
-    # TODO (NP) - eliminate these filters such that we can solve at scale
-    return _filter_tons_dataframe(context, county_to_county_highway_tons, quantile_threshold=0.999)
-
-
-@dagster.asset(
-    io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
-)
-def in_network_marine_tons(
-    context: dagster.AssetExecutionContext, county_to_county_marine_tons: pd.DataFrame
-) -> pd.DataFrame:
-    """Creates a file representing a subset of marine OD tons to consider in the TAP"""
-    # TODO (NP) - eliminate these filters such that we can solve at scale
-    return _filter_tons_dataframe(context, county_to_county_marine_tons, quantile_threshold=0.5)
-
-
 @dagster.asset(
     io_manager_key="custom_io_manager",
     metadata={
@@ -113,10 +93,13 @@ def in_network_marine_tons(
 )
 def tap_highway_tons(
     context: dagster.AssetExecutionContext,
-    in_network_highway_tons: pd.DataFrame,
+    county_to_county_highway_tons: pd.DataFrame,
     county_fips_to_highway_network_node_idx: Dict[Tuple[str, str], int],
 ) -> pd.DataFrame:
     """Tons attached to the highway network nodes (from, to, tons)"""
+    in_network_highway_tons = _filter_tons_dataframe(
+        context, county_to_county_highway_tons, quantile_threshold=0.999
+    )
     return _generate_tons_dataframe(
         context, in_network_highway_tons, county_fips_to_highway_network_node_idx
     )
@@ -134,10 +117,13 @@ def tap_highway_tons(
 )
 def tap_marine_tons(
     context: dagster.AssetExecutionContext,
-    in_network_marine_tons: pd.DataFrame,
+    county_to_county_marine_tons: pd.DataFrame,
     county_fips_to_marine_network_node_idx: Dict[Tuple[str, str], int],
 ) -> pd.DataFrame:
     """Tons attached to the marine network nodes (from, to, tons)"""
+    in_network_marine_tons = _filter_tons_dataframe(
+        context, county_to_county_marine_tons, quantile_threshold=0.5
+    )
     return _generate_tons_dataframe(
         context, in_network_marine_tons, county_fips_to_marine_network_node_idx
     )
