@@ -1,13 +1,14 @@
-from itertools import chain
-from typing import Set, Dict, Tuple, List
+from collections import defaultdict
+from typing import Dict, Tuple, Any
 
 import dagster
 import geopandas
 import igraph as ig
+import numpy as np
 import pandas as pd
+from sklearn.neighbors import BallTree
 
-from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS, RAIL_DEFAULT_MPH_SPEED
-from ireiat.util.rail_network_constants import EdgeType
+from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS, RR_MAPPING, IM_CAPACITY_TONS
 from ireiat.data_pipeline.assets.rail_network.impedance import generate_impedance_graph
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import (
@@ -15,10 +16,7 @@ from ireiat.util.graph import (
     generate_zero_based_node_maps,
     get_allowed_node_indices,
 )
-from ireiat.data_pipeline.assets.rail_network.terminals import (
-    intermodal_terminals_preprocessing,
-    update_impedance_graph_with_terminals,
-)
+from ireiat.util.rail_network_constants import EdgeType, VertexType
 
 SEPARATION_ATTRIBUTE_NAME: str = "owners"  # field used to represent owners and trackage rights
 
@@ -47,9 +45,9 @@ def filtered_and_processed_rail_network_links(
 
     real_lines = narn_rail_network_links_src[~amtk_filter & ~bad_track_filter].copy()
     ownership_cols = [col for col in real_lines.columns if "RROWNER" in col or "TRKRGHTS" in col]
-    rr_mapping_dict = {"CPRS": "CPKC", "KCS": "CPKC", "KCSM": "CPKC"}
+
     for col in ownership_cols:
-        real_lines[col] = real_lines[col].replace(rr_mapping_dict)
+        real_lines[col] = real_lines[col].replace(RR_MAPPING)
 
     owner_set = real_lines[ownership_cols].apply(lambda x: set(filter(pd.notna, x)), axis=1)
     # remove AMTK as a relevant owner, since interchange costs will not matter with AMTK
@@ -74,98 +72,27 @@ def filtered_and_processed_rail_network_links(
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", "use_geopandas": True, **INTERMEDIATE_DIRECTORY_ARGS},
-)
-def owner_rationalized_rail_links(
-    context: dagster.AssetExecutionContext,
-    filtered_and_processed_rail_network_links: geopandas.GeoDataFrame,
-) -> geopandas.GeoDataFrame:
-    """When constructing the impedance graph, there are 900+ rail owners/operators - but catering
-    for the top N will shrink the size of the impedance graph while still catering for major interchanges.
-    Currently, the number of owners considered is 40, which caters covers interchanges for 80% of the edges in the
-    rail network"""
-    COUNT_UNIQUE_ATTRIBUTE_VALUES = 40
-    unique_owners_across_edges = set(
-        chain.from_iterable(
-            filtered_and_processed_rail_network_links[SEPARATION_ATTRIBUTE_NAME].values
-        )
-    )
-    edge_list_by_owner: Dict[str, Set[int]] = {k: set() for k in unique_owners_across_edges}
-    for row in filtered_and_processed_rail_network_links.itertuples():
-        for k in getattr(row, SEPARATION_ATTRIBUTE_NAME):
-            edge_list_by_owner[k].add(row.Index)
-
-    owner_edge_count: List[Tuple[str, int]] = [(k, len(v)) for k, v in edge_list_by_owner.items()]
-    sorted_owner_edge_count = sorted(owner_edge_count, key=lambda x: x[1], reverse=True)
-    top_owners_and_edge_counts = sorted_owner_edge_count[:COUNT_UNIQUE_ATTRIBUTE_VALUES]
-
-    # publish some metadata about graph coverage
-    edge_count_of_top_owners: int = sum([x[1] for x in top_owners_and_edge_counts])
-    edge_count_of_all_owners: int = sum([x[1] for x in owner_edge_count])
-    edge_percent = edge_count_of_top_owners / edge_count_of_all_owners
-    context.log.info(
-        f"Filtering for {COUNT_UNIQUE_ATTRIBUTE_VALUES}, results in {edge_percent:.1%} edges covered"
-    )
-
-    top_owners: Set[str] = set([x[0] for x in top_owners_and_edge_counts])
-    context.log.info(f"Top owners {top_owners}")
-
-    # condenses owners from {TOP_N1, TOP_N2, BOTTOM_N2, BOTTOM_N1} to {TOP_N1, TOP_N2, 'Other'}
-    def shrink_attribute(current_row_attr_vals: Set[str]) -> Set[str]:
-        final_attr_vals = top_owners & current_row_attr_vals
-        if len(current_row_attr_vals - top_owners) >= 1:
-            final_attr_vals.add("Other")
-        return final_attr_vals
-
-    filtered_and_processed_rail_network_links[
-        SEPARATION_ATTRIBUTE_NAME
-    ] = filtered_and_processed_rail_network_links[SEPARATION_ATTRIBUTE_NAME].apply(
-        set
-    )  # when saving parquet, stores as a list so we need to convert to a set
-    shrunk_owners = filtered_and_processed_rail_network_links[SEPARATION_ATTRIBUTE_NAME].apply(
-        shrink_attribute
-    )
-    filtered_and_processed_rail_network_links[SEPARATION_ATTRIBUTE_NAME] = shrunk_owners
-    return filtered_and_processed_rail_network_links
-
-
-@dagster.asset(
-    io_manager_key="custom_io_manager",
     metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
 )
 def undirected_rail_edges(
     context: dagster.AssetExecutionContext,
-    owner_rationalized_rail_links: geopandas.GeoDataFrame,
+    filtered_and_processed_rail_network_links: geopandas.GeoDataFrame,
 ) -> pd.DataFrame:
     """For each undirected edge in the rail dataset, create a row in the table with origin_lat, origin_long,
     destination_lat, and destination_long, along with several other edge fields of interest"""
 
-    link_coords = get_coordinates_from_geoframe(owner_rationalized_rail_links)
+    link_coords = get_coordinates_from_geoframe(filtered_and_processed_rail_network_links)
     fields_to_retain = ["FRAARCID", SEPARATION_ATTRIBUTE_NAME, "MILES"]
     link_coords = pd.concat(
-        [owner_rationalized_rail_links[fields_to_retain], link_coords], axis=1
+        [filtered_and_processed_rail_network_links[fields_to_retain], link_coords], axis=1
     )  # join in the direction
     publish_metadata(context, link_coords)
     return link_coords
 
 
 @dagster.asset(io_manager_key="default_io_manager_intermediate_path")
-def complete_rail_node_to_idx(undirected_rail_edges: pd.DataFrame):
-    """Generate unique nodes->indices based on the entire rail network"""
-    return generate_zero_based_node_maps(undirected_rail_edges)
-
-
-@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
-def complete_rail_idx_to_node(complete_rail_node_to_idx):
-    """Generates unique indices->nodes based on the entire rail network"""
-    return {v: k for k, v in complete_rail_node_to_idx.items()}
-
-
-@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
 def strongly_connected_rail_graph(
-    context: dagster.AssetExecutionContext,
-    undirected_rail_edges: pd.DataFrame,
-    complete_rail_node_to_idx: Dict[Tuple[float, float], int],
+    context: dagster.AssetExecutionContext, undirected_rail_edges: pd.DataFrame
 ) -> ig.Graph:
     """iGraph object representing a strongly connected, directed graph based on the rail network"""
     # generate directed edges from the undirected edges based on the "dir" field
@@ -174,6 +101,10 @@ def strongly_connected_rail_graph(
     undirected_rail_edges[SEPARATION_ATTRIBUTE_NAME] = undirected_rail_edges[
         SEPARATION_ATTRIBUTE_NAME
     ].apply(set)
+
+    complete_rail_node_to_idx: Dict[Tuple[float, float], int] = generate_zero_based_node_maps(
+        undirected_rail_edges
+    )
     for row in undirected_rail_edges.itertuples():
         origin_coords = (row.origin_latitude, row.origin_longitude)
         destination_coords = (row.destination_latitude, row.destination_longitude)
@@ -183,8 +114,7 @@ def strongly_connected_rail_graph(
         )
 
         # record some original edge information needed for visualization and/or TAP setup
-        # TODO (NP): Account for capacity  on the rail network
-        attribute_tuple = (row.MILES, row.FRAARCID, row.owners)
+        attribute_tuple = (row.MILES, row.FRAARCID, row.owners, origin_coords, destination_coords)
         edge_tuples.append((tail, head))
         edge_attributes.append(attribute_tuple)
         edge_tuples.append((head, tail))
@@ -196,13 +126,13 @@ def strongly_connected_rail_graph(
     g = ig.Graph(
         n_vertices,
         edge_tuples,
-        vertex_attrs={"original_node_idx": list(complete_rail_node_to_idx.values())},
         edge_attrs={
             "length": [attr[0] for attr in edge_attributes],
-            "owners": [attr[2] for attr in edge_attributes],
-            "speed": [RAIL_DEFAULT_MPH_SPEED for _ in edge_attributes],
-            "edge_type": [EdgeType.RAIL_LINK.value for _ in edge_attributes],
             "original_id": [attr[1] for attr in edge_attributes],
+            "owners": [attr[2] for attr in edge_attributes],
+            "edge_type": [EdgeType.RAIL_LINK.value for _ in edge_attributes],
+            "origin_coords": [attr[3] for attr in edge_attributes],
+            "destination_coords": [attr[4] for attr in edge_attributes],
         },
         directed=True,
     )
@@ -227,50 +157,131 @@ def impedance_rail_graph(
     return g
 
 
-@dagster.asset(
-    io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
-)
-def rail_network_terminals(
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
+def impedance_rail_graph_with_terminals(
     context: dagster.AssetExecutionContext,
     intermodal_terminals_src: pd.DataFrame,
-    complete_rail_node_to_idx: Dict[Tuple[float, float], int],
-) -> pd.DataFrame:
-    """Preprocess the intermodal terminals data, including mapping terminal coordinates
-    to rail node indices using the complete_rail_node_to_idx dictionary."""
-
-    # Preprocess the terminals using the provided rail node index mapping
-    processed_terminals = intermodal_terminals_preprocessing(
-        intermodal_terminals_src, complete_rail_node_to_idx
-    )
-
-    context.log.info(
-        f"Intermodal terminals data loaded and preprocessed with {processed_terminals.shape[0]} terminals"
-    )
-
-    # Publish metadata
-    publish_metadata(context, processed_terminals)
-
-    return processed_terminals
-
-
-@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
-def rail_network_graph(
-    context: dagster.AssetExecutionContext,
-    rail_network_terminals: pd.DataFrame,
     impedance_rail_graph: ig.Graph,
 ) -> ig.Graph:
-    """Updates the rail impedance graph by adding terminal nodes and edges."""
+    """Add intermodal facilities and attach them to the impedance rail graph at the right place.
+    This asset makes use of the"""
 
-    # Call the update function to modify the graph by adding terminals
-    updated_graph = update_impedance_graph_with_terminals(
-        context, rail_network_terminals, impedance_rail_graph
+    # convert RAIL CO to a set, replacing things inside of parentheses and that occur with large strings ending in '-'
+    intermodal_idx_to_rail_carriers = (
+        intermodal_terminals_src["RAIL_CO"]
+        .str.replace("via", ",")
+        .str.replace(" ", "")
+        .str.replace(r"\(.*\)", "", regex=True)
+        .replace(r".*-", "", regex=True)
+        .str.split(",")
+        .apply(lambda x: set(x))
     )
+
+    def replace_items(item_set):
+        return {RR_MAPPING.get(item, item) for item in item_set}
+
+    intermodal_terminals_src["RAIL_CO"] = intermodal_idx_to_rail_carriers.apply(replace_items)
+
+    intersection_of_im_and_rail = intermodal_terminals_src["RAIL_CO"].apply(
+        lambda x: x & set(impedance_rail_graph.es["owners"])
+    )
+    im_terminals_found_in_rail = intersection_of_im_and_rail.loc[
+        intersection_of_im_and_rail != set()
+    ]
+
     context.log.info(
-        f"Rail network graph updated with terminals. The updated graph has {len(updated_graph.vs)} nodes and {len(updated_graph.es)} edges."
+        f"{len(im_terminals_found_in_rail)} IM terminals found in rail network out of {len(intermodal_terminals_src)}"
     )
-    assert updated_graph.is_connected()
-    return updated_graph
+    im_pdf = intermodal_terminals_src.iloc[im_terminals_found_in_rail.index].reset_index()
+
+    # add vertices for the terminals and dummy nodes
+    num_vertices_to_add = len(im_pdf) * 2
+    vertex_attributes = defaultdict(list)
+    for row in im_pdf.itertuples():
+        for vertex_type in [VertexType.IM_TERMINAL, VertexType.IM_DUMMY_NODE]:
+            vertex_attributes["terminal_idx"].append(row.Index)
+            vertex_attributes["terminal_name"].append(row.TERMINAL)
+            vertex_attributes["coords"].append((row.LAT, row.LON))
+            vertex_attributes["vertex_type"].append(vertex_type.value)
+            vertex_attributes["owners"].append(row.RAIL_CO)
+
+    impedance_rail_graph.add_vertices(num_vertices_to_add, attributes=vertex_attributes)
+
+    # get actual vertex indices for these just-added vertices
+    terminal_idx_to_graph_vertex_idx_map = {
+        v["terminal_idx"]: v.index
+        for v in impedance_rail_graph.vs.select(vertex_type=VertexType.IM_TERMINAL)
+    }
+    dummy_terminal_idx_to_graph_vertex_idx_map = {
+        v["terminal_idx"]: v.index
+        for v in impedance_rail_graph.vs.select(vertex_type=VertexType.IM_DUMMY_NODE)
+    }
+
+    # create a map of (owner, origin coords)->source vertex index for all non-impedance edges
+    owner_coord_to_vertex_idx_map = {
+        (e["owners"], e["origin_coords"]): e.source_vertex.index
+        for e in impedance_rail_graph.es
+        if e["edge_type"] != EdgeType.IMPEDANCE_LINK.value
+    }
+
+    quant_node_lat_longs = [
+        origin_coords for _, origin_coords in owner_coord_to_vertex_idx_map.keys()
+    ]
+    quant_lat_longs_radians = np.deg2rad(quant_node_lat_longs)
+    quant_node_ball_tree = BallTree(quant_lat_longs_radians, metric="haversine")
+
+    im_lat_longs = im_pdf[["LAT", "LON"]]
+    im_fac_lat_longs_radians = np.deg2rad(im_lat_longs)
+
+    # look up the closest 1000 nodes to a given terminal - if we find an operator match, great. if not, we discard
+    distances_radians, lookup_to_bt_node_idx = quant_node_ball_tree.query(
+        im_fac_lat_longs_radians, k=1000
+    )
+    edges = []
+    edge_attributes: Dict[str, list[Any]] = defaultdict(list)
+    for im_idx, record in enumerate(im_pdf.itertuples()):
+        rrs_at_im: set = record.RAIL_CO
+        dummy_terminal_node_vertex_idx = dummy_terminal_idx_to_graph_vertex_idx_map[im_idx]
+        im_terminal_node_vertex_idx = terminal_idx_to_graph_vertex_idx_map[im_idx]
+
+        # add edges between the IM terminal and its dummy node
+        edges.append((im_terminal_node_vertex_idx, dummy_terminal_node_vertex_idx))
+        edges.append((dummy_terminal_node_vertex_idx, im_terminal_node_vertex_idx))
+        for i in range(2):
+            edge_attributes["edge_type"].append(EdgeType.IM_CAPACITY.value)
+            edge_attributes["capacity"].append(IM_CAPACITY_TONS)
+            edge_attributes["length"].append(0.1)  # nominal length
+
+        # now try to figure out where to map to the quant network
+        for rr_at_im in rrs_at_im:
+            for candidate_quant_node in lookup_to_bt_node_idx[im_idx]:
+                # try to get a vertex with the particular owner and the matching lat long from the quant network
+                matching_vertex = owner_coord_to_vertex_idx_map.get(
+                    (rr_at_im, quant_node_lat_longs[candidate_quant_node])
+                )
+                if matching_vertex:
+                    edges.append(
+                        (dummy_terminal_idx_to_graph_vertex_idx_map[im_idx], matching_vertex)
+                    )
+                    edges.append(
+                        (matching_vertex, dummy_terminal_idx_to_graph_vertex_idx_map[im_idx])
+                    )
+                    for i in range(2):
+                        edge_attributes["length"].append(0.1)  # nominal length
+                        edge_attributes["edge_type"].append(EdgeType.IM_DUMMY.value)
+                    break
+            else:
+                context.log.info(
+                    f"Nothing found for {rr_at_im} for terminal number {im_idx} with name"
+                    f" {record.TERMINAL}"
+                )
+
+    impedance_rail_graph.add_edges(edges, attributes=edge_attributes)
+    context.log.info(
+        f"Graph has {len(impedance_rail_graph.vs)} nodes and {len(impedance_rail_graph.es)} edges."
+    )
+    assert impedance_rail_graph.is_connected()
+    return impedance_rail_graph
 
 
 @dagster.asset(
@@ -278,18 +289,18 @@ def rail_network_graph(
     metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
 )
 def rail_network_dataframe(
-    context: dagster.AssetExecutionContext, rail_network_graph: ig.Graph
+    context: dagster.AssetExecutionContext, impedance_rail_graph_with_terminals: ig.Graph
 ) -> pd.DataFrame:
     """Returns a dataframe of graph edges along with attributes needed to solve the TAP"""
     connected_edge_tuples = [
-        (e.source, e.target, e["length"], e["speed"], e["edge_type"], e["owners"], e["capacity"])
-        for e in rail_network_graph.es
+        (e.source, e.target, e["length"], e["edge_type"], e["owners"], e["capacity"])
+        for e in impedance_rail_graph_with_terminals.es
     ]
 
     # create and return a dataframe
     pdf = pd.DataFrame(
         connected_edge_tuples,
-        columns=["tail", "head", "length", "speed", "edge_type", "owners", "capacity"],
+        columns=["tail", "head", "length", "edge_type", "owners", "capacity"],
     )
     context.log.info(f"Rail network dataframe created with {len(pdf)} edges.")
     publish_metadata(context, pdf)

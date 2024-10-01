@@ -18,13 +18,13 @@ narn_links_src = asset_spec_factory(narn_links_spec)
 
 intermodal_terminals_spec = dagster.AssetSpec(
     key=dagster.AssetKey("intermodal_terminals_spec"),
-    description="CSV containing intermodal terminal information, including mapping to corresponding rail network nodes.",
+    description="XLSX containing intermodal terminal information",
     metadata={
-        "format": "csv",
-        "filename": "im_terminals.csv",
+        "format": "xlsx",
+        "filename": "im_terminals.xlsx",
         "source_path": "raw/",
         "dashboard_url": dagster.MetadataValue.url(
-            "https://raw.githubusercontent.com/owg-digital/ireiat/master/data/rail_network/im_terminals.csv"
+            "https://hub.arcgis.com/api/download/v1/items/e6332597fcd546d3899f60ec9b9157b9/excel?redirect=true&layers=0"
         ),
     },
 )

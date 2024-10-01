@@ -3,7 +3,6 @@ from typing import Tuple, Set, Dict, Any
 
 import igraph as ig
 
-from ireiat.config import RAIL_DEFAULT_MPH_SPEED
 from ireiat.util.rail_network_constants import EdgeType
 
 
@@ -27,23 +26,23 @@ def _generate_subgraphs(g: ig.Graph, separation_attribute: str = "owner") -> Dic
         for k in e[separation_attribute]:
             edge_list_by_owner[k].add(e.index)
     # retain all vertices in the subgraph to preserve numbering
-    subgraphs = {
-        k: g.subgraph_edges(v, delete_vertices=False) for k, v in edge_list_by_owner.items()
-    }
+    subgraphs = {k: g.subgraph_edges(v) for k, v in edge_list_by_owner.items()}
     for k, subgraph in subgraphs.items():
         subgraph.es[separation_attribute] = [f"{k}" for _ in subgraph.es]
-        subgraph.vs["original_idx"] = [f"{k}{v.index}" for v in subgraph.vs]
     return subgraphs
 
 
-def _generate_impedances(g: ig.Graph, separation_attribute="owner") -> Set[Tuple[str, str]]:
+def _generate_impedances(
+    g: ig.Graph, separation_attribute="owner"
+) -> Set[Tuple[str, str, str, str]]:
     """
-    Given a graph with a `impedance_attribute` on each edge, determine the impedance
+    Given a graph with a `separation_attribute` on each edge, determine the impedance
     edges that would be needed to join subgraphs that were created from unique values of the
-    impedance attribute. For example, if a graph of 0 -> 1 -> 2 had 'owners' 'A' on the first
-    edge and 'B' on the second edge, this method would return `{('A1','B1')}` given that a
-    graph split by owner would be A graph: 0->1 and B graph: 1->2 and there would be an
-    impedance edge between 'A1' and 'B1'.
+    separation attribute. For example, if a graph of 0 -> 1 -> 2 had 'owners' 'A' on the first
+    edge and 'B' on the second edge (along with origin and destination coords for each edge),
+    this method would return `{('A', destination_coords, 'B', origin_coords)}` given
+    that a graph split by owner would be A graph: 0->1 and B graph: 1->2 and there would be an
+    impedance edge between 'A1' and 'B1' (with appropriate coordinates returned).
 
     :param g: graph to generate impedance edges from
     :param separation_attribute: string identifer on the graph edges
@@ -52,7 +51,6 @@ def _generate_impedances(g: ig.Graph, separation_attribute="owner") -> Set[Tuple
     impedances = set()
     for v in g.vs:
         in_edges, out_edges = v.in_edges(), v.out_edges()
-        # cater for single edges
         if len(out_edges) == 1 and len(in_edges) == 1:
             in_owners, out_owners = (
                 in_edges[0][separation_attribute],
@@ -62,18 +60,34 @@ def _generate_impedances(g: ig.Graph, separation_attribute="owner") -> Set[Tuple
                 continue  # we have single in/out edges with the same owner on each side
             else:
                 # we have single in/out edges with different owners
+                in_edge_destination_coords = in_edges[0]["destination_coords"]
+                out_edge_origin_coords = out_edges[0]["origin_coords"]
                 for in_edge_owner, out_edge_owner in product(in_owners, out_owners):
                     if in_edge_owner != out_edge_owner:
-                        impedances.add((f"{in_edge_owner}{v.index}", f"{out_edge_owner}{v.index}"))
+                        impedances.add(
+                            (
+                                in_edge_owner,
+                                in_edge_destination_coords,
+                                out_edge_owner,
+                                out_edge_origin_coords,
+                            )
+                        )
         else:
             for in_edge in in_edges:
+                in_edge_destination_coords = in_edge["destination_coords"]
                 in_edge_owners = in_edge[separation_attribute]
                 for out_edge in out_edges:
+                    out_edge_origin_coords = out_edge["origin_coords"]
                     out_edge_owners = out_edge[separation_attribute]
                     for in_edge_owner, out_edge_owner in product(in_edge_owners, out_edge_owners):
                         if in_edge_owner != out_edge_owner:
                             impedances.add(
-                                (f"{in_edge_owner}{v.index}", f"{out_edge_owner}{v.index}")
+                                (
+                                    in_edge_owner,
+                                    in_edge_destination_coords,
+                                    out_edge_owner,
+                                    out_edge_origin_coords,
+                                )
                             )
 
     return impedances
@@ -90,16 +104,25 @@ def generate_impedance_graph(g: ig.Graph, separation_attribute="owner") -> ig.Gr
 
     """
     impedances = _generate_impedances(g, separation_attribute=separation_attribute)
+    print(f"Generated {len(impedances)} impedances")
     subgraphs = _generate_subgraphs(g, separation_attribute=separation_attribute)
+    print(f"Generated {len(subgraphs)} subgraphs")
     disjoint_union = ig.disjoint_union(subgraphs.values())
-    disjoint_union_vertex_mapping = {v["original_idx"]: v.index for v in disjoint_union.vs}
+
+    # cache vertices from/to in the disjoint graph to facilitate fast lookups
+    vertices_from = {
+        (e["owners"], e["destination_coords"]): e.target_vertex.index for e in disjoint_union.es
+    }
+    vertices_to = {
+        (e["owners"], e["origin_coords"]): e.source_vertex.index for e in disjoint_union.es
+    }
     impedance_edges = [
-        (disjoint_union_vertex_mapping[from_id], disjoint_union_vertex_mapping[to_id])
-        for from_id, to_id in impedances
+        (vertices_from[(src_owner, dest_coords)], vertices_to[(dest_owner, origin_coords)])
+        for src_owner, dest_coords, dest_owner, origin_coords in impedances
     ]
+
     # construct default edge attributes for impedance edges and add them
     impedance_edge_attrs: Dict[str, Any] = dict()
-    impedance_edge_attrs["speed"] = [RAIL_DEFAULT_MPH_SPEED for _ in impedance_edges]
     impedance_edge_attrs["edge_type"] = [EdgeType.IMPEDANCE_LINK.value for _ in impedance_edges]
     impedance_edge_attrs[separation_attribute] = ["imp" for _ in impedance_edges]
     disjoint_union.add_edges(impedance_edges, impedance_edge_attrs)
