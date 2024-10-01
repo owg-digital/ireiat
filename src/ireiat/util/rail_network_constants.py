@@ -8,6 +8,7 @@ class VertexType(StrEnum):
 
     IM_TERMINAL = "Intermodal Terminal"
     IM_DUMMY_NODE = "Intermodal Dummy Node"
+    COUNTY_CENTROID = "cc"
 
 
 class EdgeType(StrEnum):
@@ -19,3 +20,4 @@ class EdgeType(StrEnum):
     IM_DUMMY = "Linkage between IM and rail"
     RAIL_LINK = "Rail Link"
     IMPEDANCE_LINK = "Impedance Link"
+    COUNTY_TO_IM_LINK = "County to IM"

@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import chain
 from typing import Dict, Tuple, Any
 
 import dagster
@@ -8,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import BallTree
 
-from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS, RR_MAPPING, IM_CAPACITY_TONS
+from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS, RR_MAPPING
 from ireiat.data_pipeline.assets.rail_network.impedance import generate_impedance_graph
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import (
@@ -164,7 +165,7 @@ def impedance_rail_graph_with_terminals(
     impedance_rail_graph: ig.Graph,
 ) -> ig.Graph:
     """Add intermodal facilities and attach them to the impedance rail graph at the right place.
-    This asset makes use of the"""
+    This asset matches owners at the intermodal facilities to the closest impedance graph node(s)"""
 
     # convert RAIL CO to a set, replacing things inside of parentheses and that occur with large strings ending in '-'
     intermodal_idx_to_rail_carriers = (
@@ -249,7 +250,6 @@ def impedance_rail_graph_with_terminals(
         edges.append((dummy_terminal_node_vertex_idx, im_terminal_node_vertex_idx))
         for i in range(2):
             edge_attributes["edge_type"].append(EdgeType.IM_CAPACITY.value)
-            edge_attributes["capacity"].append(IM_CAPACITY_TONS)
             edge_attributes["length"].append(0.1)  # nominal length
 
         # now try to figure out where to map to the quant network
@@ -284,24 +284,39 @@ def impedance_rail_graph_with_terminals(
     return impedance_rail_graph
 
 
-@dagster.asset(
-    io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
-)
-def rail_network_dataframe(
-    context: dagster.AssetExecutionContext, impedance_rail_graph_with_terminals: ig.Graph
-) -> pd.DataFrame:
-    """Returns a dataframe of graph edges along with attributes needed to solve the TAP"""
-    connected_edge_tuples = [
-        (e.source, e.target, e["length"], e["edge_type"], e["owners"], e["capacity"])
-        for e in impedance_rail_graph_with_terminals.es
+@dagster.asset(io_manager_key="default_io_manager_intermediate_path")
+def impedance_rail_graph_with_terminals_reduced(
+    context: dagster.AssetExecutionContext,
+    impedance_rail_graph_with_terminals: ig.Graph,
+) -> ig.Graph:
+    """Compute IM to IM shortest paths and reduce the rail impedance network to only consider these edges"""
+    im_indices = [
+        v.index
+        for v in impedance_rail_graph_with_terminals.vs.select(
+            vertex_type=VertexType.IM_TERMINAL.value
+        )
     ]
 
-    # create and return a dataframe
-    pdf = pd.DataFrame(
-        connected_edge_tuples,
-        columns=["tail", "head", "length", "edge_type", "owners", "capacity"],
-    )
-    context.log.info(f"Rail network dataframe created with {len(pdf)} edges.")
-    publish_metadata(context, pdf)
-    return pdf
+    # get all the edges for IM->IM on the impedance network
+    edge_set: set[int] = set()
+    for idx, im_from in enumerate(im_indices):
+        destinations = [i for i in im_indices if i != im_from]
+        edge_results = impedance_rail_graph_with_terminals.get_shortest_paths(
+            im_from, destinations, weights="length", output="epath"
+        )
+        edge_set.update(chain.from_iterable(edge_results))
+
+    # get the edges between IM->IM_dummy and IM_dummy->Impedance network
+    im_capacity_edges = [
+        e.index
+        for e in impedance_rail_graph_with_terminals.es.select(edge_type=EdgeType.IM_CAPACITY)
+    ]
+    im_dummy_edges = [
+        e.index for e in impedance_rail_graph_with_terminals.es.select(edge_type=EdgeType.IM_DUMMY)
+    ]
+    edge_set.update(im_capacity_edges)
+    edge_set.update(im_dummy_edges)
+    small_g = impedance_rail_graph_with_terminals.subgraph_edges(edge_set)
+    context.log.info(f"Graph has {len(small_g.vs)} nodes and {len(small_g.es)} edges.")
+    assert small_g.is_connected()
+    return small_g

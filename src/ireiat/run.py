@@ -68,8 +68,13 @@ def solve(network_file: Path, od_file: Path, max_gap: float, output_file: str):
 
     # pass the command for the RScript file
     cmd = ["Rscript", tf.name, network_file, od_file, CACHE_PATH, str(max_gap), output_file]
-    logger.debug(f"About to run {cmd}")
-    subprocess.call(cmd, shell=True, universal_newlines=True)
+    logger.info(f"Calling subprocess {cmd}")
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    # Read the output line by line as it becomes available
+    for line in process.stdout:
+        print(line, end="")
+    process.wait()
+
     temporary_file_path.unlink(missing_ok=True)
 
 
