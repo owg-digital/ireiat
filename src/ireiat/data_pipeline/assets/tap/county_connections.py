@@ -15,7 +15,6 @@ from ireiat.config import (
     IM_SEARCH_RADIUS_MILES,
     HIGHWAY_DEFAULT_MPH_SPEED,
 )
-from ireiat.util.graph import get_allowed_node_indices
 from ireiat.util.rail_network_constants import EdgeType, VertexType
 
 
@@ -102,15 +101,48 @@ def rail_county_association(
     county_fips_to_centroid: Dict[Tuple[str, str], Tuple[float, float]],
 ) -> Tuple[ig.Graph, Dict[Tuple[str, str], int]]:
     """Add county centroids to rail impedance network with county centroids connected to nearby IM facilities"""
-    attr_dict = {
-        "coords": [v for v in county_fips_to_centroid.values()],
-        "vertex_type": [VertexType.COUNTY_CENTROID for _ in county_fips_to_centroid],
-    }
-    impedance_rail_graph_with_terminals.add_vertices(
-        len(county_fips_to_centroid), attributes=attr_dict
+
+    # unfortunately, there are several counties that may not have ANY intermodal facilities within a radius
+    # we don't want to add these counties as vertices to the graph, so we need to filter them out first
+    # by interrogating which IM facilities are nearby ALL counties
+    im_lat_longs = [
+        v["coords"]
+        for v in impedance_rail_graph_with_terminals.vs.select(
+            vertex_type=VertexType.IM_TERMINAL.value
+        )
+    ]
+    im_lat_longs_radians = np.deg2rad(np.array(im_lat_longs))
+    im_node_ball_tree = BallTree(im_lat_longs_radians, metric="haversine")
+
+    search_radius_radians = IM_SEARCH_RADIUS_MILES / RADIUS_EARTH_MILES
+    county_lat_longs = list(county_fips_to_centroid.values())
+    reverse_county_lookup = {v: k for k, v in county_fips_to_centroid.items()}
+    search_coords_radians = np.deg2rad(np.array(county_lat_longs))
+    imfac_idxs, distances_radians = im_node_ball_tree.query_radius(
+        search_coords_radians, r=search_radius_radians, return_distance=True, sort_results=True
+    )
+    county_fips_to_centroid_with_im = dict()
+    for idx, candidate_ims in enumerate(imfac_idxs):
+        if len(candidate_ims) > 0:
+            key = reverse_county_lookup[county_lat_longs[idx]]
+            county_fips_to_centroid_with_im[key] = county_fips_to_centroid[key]
+
+    # log the results
+    counties_without_im = len(county_fips_to_centroid) - len(county_fips_to_centroid_with_im)
+    context.log.info(
+        f"{counties_without_im} counties do not have IM facilities nearby. Excluding them from the graph."
     )
 
-    # look up the coordinates and of each centroid vertex and map to the vertex ID (after adding cetnroid vertices)
+    # now we have a list of county centroids with IM facilities, which we add to the graph
+    attr_dict = {
+        "coords": [v for v in county_fips_to_centroid_with_im.values()],
+        "vertex_type": [VertexType.COUNTY_CENTROID for _ in county_fips_to_centroid_with_im],
+    }
+    impedance_rail_graph_with_terminals.add_vertices(
+        len(county_fips_to_centroid_with_im), attributes=attr_dict
+    )
+
+    # look up the coordinates and of each centroid vertex and map to the vertex ID (after adding centroid vertices)
     county_centroid_coords_to_vertex_idx = {
         v["coords"]: v.index
         for v in impedance_rail_graph_with_terminals.vs.select(
@@ -118,7 +150,7 @@ def rail_county_association(
         )
     }
 
-    # look up the coordinates and of each IM vertex and map to the vertex ID (after adding cetnroid vertices)
+    # look up the coordinates and of each IM vertex and map to the vertex ID (after adding centroid vertices)
     im_coords_to_vertex_idx = {
         v["coords"]: v.index
         for v in impedance_rail_graph_with_terminals.vs.select(
@@ -147,29 +179,17 @@ def rail_county_association(
             county_vertex = county_centroid_coords_to_vertex_idx[county_lat_longs[idx]]
             edges_to_add.append((county_vertex, im_vertex))
             edges_to_add.append((im_vertex, county_vertex))
-            edge_attributes["length"].append(distance)
-            edge_attributes["length"].append(distance)
-            edge_attributes["edge_type"].append(EdgeType.COUNTY_TO_IM_LINK.value)
-            edge_attributes["edge_type"].append(EdgeType.COUNTY_TO_IM_LINK.value)
-            edge_attributes["speed"].append(HIGHWAY_DEFAULT_MPH_SPEED)
-            edge_attributes["speed"].append(HIGHWAY_DEFAULT_MPH_SPEED)
-
-    # there are several counties that do not have intermodal facilities within the specified radius
-    counties_without_im = len([x for x in imfac_idxs if len(x) == 0])
-    context.log.info(
-        f"{counties_without_im} counties do not have IM facilities nearby. Excluding them from the graph."
-    )
+            for _ in range(2):
+                edge_attributes["length"].append(distance)
+                edge_attributes["edge_type"].append(EdgeType.COUNTY_TO_IM_LINK.value)
+                edge_attributes["speed"].append(HIGHWAY_DEFAULT_MPH_SPEED)
 
     impedance_rail_graph_with_terminals.add_edges(edges_to_add, attributes=edge_attributes)
 
-    allowed_node_indices = get_allowed_node_indices(impedance_rail_graph_with_terminals)
-
-    # construct a connected subgraph
-    connected_subgraph = impedance_rail_graph_with_terminals.subgraph(allowed_node_indices)
+    assert impedance_rail_graph_with_terminals.is_connected()
 
     county_fips_to_rail_network_node_idx = {
-        k: county_centroid_coords_to_vertex_idx.get(v)
-        for k, v in county_fips_to_centroid.items()
-        if county_centroid_coords_to_vertex_idx.get(v)
+        k: county_centroid_coords_to_vertex_idx[v]
+        for k, v in county_fips_to_centroid_with_im.items()
     }
-    return connected_subgraph, county_fips_to_rail_network_node_idx
+    return impedance_rail_graph_with_terminals, county_fips_to_rail_network_node_idx

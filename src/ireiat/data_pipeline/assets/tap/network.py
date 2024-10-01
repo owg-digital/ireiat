@@ -49,7 +49,6 @@ def tap_highway_network_dataframe(
 )
 def tap_rail_network_dataframe(
     context: dagster.AssetExecutionContext,
-    county_fips_to_rail_network_node_idx: dict[tuple[str, str], int],
     rail_graph_with_county_connections: ig.Graph,
 ) -> pd.DataFrame:
     """Entire rail network to represent the TAP, complete with capacity and cost information"""
