@@ -67,7 +67,6 @@ HIGHWAY_DEFAULT_MPH_SPEED = (
 )
 
 # Rail
-RAIL_DEFAULT_TERMINAL_CAPACITY_TONS = 100000
 RAIL_DEFAULT_LINK_CAPACITY_TONS = 60000
 RAIL_DEFAULT_MPH_SPEED = 20  # miles per hour
 # Beta - the exponent in the congestion term
@@ -85,7 +84,9 @@ RR_MAPPING = {
     "KCSM": "CPKC",
     "JXPT": "JXP",
 }
-IM_CAPACITY_TONS = 500000 * 15  # assume 500K containers per year at 15 net tons per container
+IM_CAPACITY_TONS = (
+    500000 * 15 / 2 * 1e-6
+)  # assume 500K containers per year at 15 net tons per container
 IM_SEARCH_RADIUS_MILES = 250  # radius to search around each county centroid
 
 # Marine

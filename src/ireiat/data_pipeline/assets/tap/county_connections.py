@@ -97,7 +97,7 @@ def county_fips_to_marine_network_node_idx(
 )
 def rail_county_association(
     context: dagster.AssetExecutionContext,
-    impedance_rail_graph_with_terminals: ig.Graph,
+    impedance_rail_graph_with_terminals_reduced: ig.Graph,
     county_fips_to_centroid: Dict[Tuple[str, str], Tuple[float, float]],
 ) -> Tuple[ig.Graph, Dict[Tuple[str, str], int]]:
     """Add county centroids to rail impedance network with county centroids connected to nearby IM facilities"""
@@ -105,12 +105,8 @@ def rail_county_association(
     # unfortunately, there are several counties that may not have ANY intermodal facilities within a radius
     # we don't want to add these counties as vertices to the graph, so we need to filter them out first
     # by interrogating which IM facilities are nearby ALL counties
-    im_lat_longs = [
-        v["coords"]
-        for v in impedance_rail_graph_with_terminals.vs.select(
-            vertex_type=VertexType.IM_TERMINAL.value
-        )
-    ]
+    g = impedance_rail_graph_with_terminals_reduced
+    im_lat_longs = [v["coords"] for v in g.vs.select(vertex_type=VertexType.IM_TERMINAL.value)]
     im_lat_longs_radians = np.deg2rad(np.array(im_lat_longs))
     im_node_ball_tree = BallTree(im_lat_longs_radians, metric="haversine")
 
@@ -138,24 +134,16 @@ def rail_county_association(
         "coords": [v for v in county_fips_to_centroid_with_im.values()],
         "vertex_type": [VertexType.COUNTY_CENTROID for _ in county_fips_to_centroid_with_im],
     }
-    impedance_rail_graph_with_terminals.add_vertices(
-        len(county_fips_to_centroid_with_im), attributes=attr_dict
-    )
+    g.add_vertices(len(county_fips_to_centroid_with_im), attributes=attr_dict)
 
     # look up the coordinates and of each centroid vertex and map to the vertex ID (after adding centroid vertices)
     county_centroid_coords_to_vertex_idx = {
-        v["coords"]: v.index
-        for v in impedance_rail_graph_with_terminals.vs.select(
-            vertex_type=VertexType.COUNTY_CENTROID.value
-        )
+        v["coords"]: v.index for v in g.vs.select(vertex_type=VertexType.COUNTY_CENTROID.value)
     }
 
     # look up the coordinates and of each IM vertex and map to the vertex ID (after adding centroid vertices)
     im_coords_to_vertex_idx = {
-        v["coords"]: v.index
-        for v in impedance_rail_graph_with_terminals.vs.select(
-            vertex_type=VertexType.IM_TERMINAL.value
-        )
+        v["coords"]: v.index for v in g.vs.select(vertex_type=VertexType.IM_TERMINAL.value)
     }
 
     # create a ball tree
@@ -184,12 +172,12 @@ def rail_county_association(
                 edge_attributes["edge_type"].append(EdgeType.COUNTY_TO_IM_LINK.value)
                 edge_attributes["speed"].append(HIGHWAY_DEFAULT_MPH_SPEED)
 
-    impedance_rail_graph_with_terminals.add_edges(edges_to_add, attributes=edge_attributes)
+    g.add_edges(edges_to_add, attributes=edge_attributes)
 
-    assert impedance_rail_graph_with_terminals.is_connected()
+    assert g.is_connected()
 
     county_fips_to_rail_network_node_idx = {
         k: county_centroid_coords_to_vertex_idx[v]
         for k, v in county_fips_to_centroid_with_im.items()
     }
-    return impedance_rail_graph_with_terminals, county_fips_to_rail_network_node_idx
+    return g, county_fips_to_rail_network_node_idx
