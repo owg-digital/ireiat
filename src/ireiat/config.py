@@ -73,6 +73,16 @@ RAIL_BETA = 3.5
 # Alpha - # the scalar in the congestion term
 RAIL_ALPHA_IM = 1
 RAIL_ALPHA = 0.1
+# standardize railway codes both in the NARN data and on intermodal terminals
+RR_MAPPING = {
+    "CP": "CPKC",
+    "CSX": "CSXT",
+    "CPRS": "CPKC",
+    "KCS": "CPKC",
+    "KCSM": "CPKC",
+    "JXPT": "JXP",
+}
+IM_CAPACITY_TONS = 500000 * 15  # assume 750K containers per year at 15 net tons per container
 
 # Marine
 MARINE_CAPACITY_TONS = 150000

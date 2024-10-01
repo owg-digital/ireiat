@@ -79,10 +79,6 @@ def _filter_tons_dataframe(
 
 @dagster.asset(
     io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
-)
-@dagster.asset(
-    io_manager_key="custom_io_manager",
     metadata={
         "format": "parquet",
         "write_kwargs": dagster.MetadataValue.json(

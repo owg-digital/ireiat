@@ -14,6 +14,8 @@ class TestImpedances(unittest.TestCase):
         g = ig.Graph(directed=True)
         g.add_vertices(3)
         g.add_edges([(0, 1), (1, 2)])
+        g.es["origin_coords"] = [(0, 0), (1, 1)]
+        g.es["destination_coords"] = [(1, 1), (2, 2)]
         g.es["owner"] = [{"A", "B"}, {"B"}]
         s = _generate_subgraphs(g)
         self.assertEqual(len(s.keys()), 2)  # just A and B
@@ -37,6 +39,8 @@ class TestImpedances(unittest.TestCase):
         g.add_vertices(4)
         g.add_edges([(0, 1), (1, 2), (2, 3)])
         g.es["owner"] = [{"A", "B"}, {"A", "B"}, {"B"}]
+        g.es["origin_coords"] = [(0, 0), (1, 1), (2, 2)]
+        g.es["destination_coords"] = [(1, 1), (2, 2), (3, 3)]
         self._node_edge_impedance_confirmation(g, 7, 6, 1)
 
     def test_junction_with_two_outlet_owners_establishes_sensible_impedances(self):
@@ -44,6 +48,8 @@ class TestImpedances(unittest.TestCase):
         g.add_vertices(4)
         g.add_edges([(0, 1), (1, 2), (1, 3)])
         g.es["owner"] = [{"A"}, {"A"}, {"C"}]
+        g.es["origin_coords"] = [(0, 0), (1, 1), (1, 1)]
+        g.es["destination_coords"] = [(1, 1), (2, 2), (3, 3)]
         self._node_edge_impedance_confirmation(g, 5, 4, 1)
 
     def test_junction_with_two_inlet_and_two_outlet_establishes_impedances(self):
@@ -51,18 +57,26 @@ class TestImpedances(unittest.TestCase):
         g.add_vertices(5)
         g.add_edges([(0, 1), (1, 2), (3, 1), (1, 4)])
         g.es["owner"] = [{"A"}, {"A"}, {"C"}, {"C"}]
+        g.es["origin_coords"] = [(0, 0), (1, 1), (3, 3), (1, 1)]
+        g.es["destination_coords"] = [(1, 1), (2, 2), (1, 1), (4, 4)]
         self._node_edge_impedance_confirmation(g, 6, 6, 2)
 
     def test_bi_directional_junction_with_two_inlet_and_two_outlet_establishes_impedances(self):
         g = ig.Graph(directed=True)
         g.add_vertices(5)
-        g.add_edges([(0, 1), (1, 0), (1, 2), (2, 1), (3, 1), (1, 3), (1, 4), (4, 1)])
+        edges = [(0, 1), (1, 0), (1, 2), (2, 1), (3, 1), (1, 3), (1, 4), (4, 1)]
+        g.add_edges(edges)
         g.es["owner"] = [{"A"}, {"A"}, {"C"}, {"C"}]
+        g.es["origin_coords"] = [(o, o) for o, _ in edges]
+        g.es["destination_coords"] = [(d, d) for _, d in edges]
         self._node_edge_impedance_confirmation(g, 6, 10, 2)
 
     def test_multiple_owners_establishes_impedances(self):
         g = ig.Graph(directed=True)
         g.add_vertices(5)
-        g.add_edges([(0, 1), (1, 2), (2, 3), (2, 4)])
+        edges = [(0, 1), (1, 2), (2, 3), (2, 4)]
+        g.add_edges(edges)
         g.es["owner"] = [{"A", "B"}, {"B"}, {"A", "B"}, {"C"}]
+        g.es["origin_coords"] = [(o, o) for o, _ in edges]
+        g.es["destination_coords"] = [(d, d) for _, d in edges]
         self._node_edge_impedance_confirmation(g, 10, 9, 3)

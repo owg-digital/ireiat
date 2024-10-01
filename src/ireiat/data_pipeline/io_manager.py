@@ -100,10 +100,12 @@ class TabularDataLocalIOManager(dagster.ConfigurableIOManager):
             obj.to_parquet(fpath, **parsed_write_kwargs)
         elif fmt == "csv":
             obj.to_csv(fpath, **parsed_write_kwargs)
+        elif fmt == "xlsx":
+            obj.to_excel(fpath, **parsed_write_kwargs)
         elif fmt == "zip":
             context.log.info("Assuming zip file from download. Skipping persistence.")
         else:
-            raise NotImplementedError(f"Cannot read file of type {fmt}!")
+            raise NotImplementedError(f"Cannot write file of type {fmt}!")
 
     def load_input(self, context) -> pd.DataFrame | geopandas.GeoDataFrame:
         """This reads a dataframe based on file ending and metadata"""
