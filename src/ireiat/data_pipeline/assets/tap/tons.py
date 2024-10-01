@@ -14,9 +14,16 @@ def _generate_tons_dataframe(
 ) -> pd.DataFrame:
     """Helper function to associate (STATE, COUNTY) tons to a target network node ID mapping"""
     od_tuples = []
+    included_tons, excluded_tons = 0, 0
     for row in in_network_tons.itertuples():
         orig = (row.state_orig, row.county_orig)
         dest = (row.state_dest, row.county_dest)
+        if (
+            orig not in county_fips_to_network_node_idx
+            or dest not in county_fips_to_network_node_idx
+        ):
+            excluded_tons += row.tons
+            continue
         od_tuples.append(
             (
                 county_fips_to_network_node_idx[orig],
@@ -24,6 +31,12 @@ def _generate_tons_dataframe(
                 row.tons,
             )
         )
+        included_tons += row.tons
+
+    total_tons = included_tons + excluded_tons
+    context.log.info(
+        f"Tons excluded {excluded_tons}, tons included {included_tons}: {excluded_tons / total_tons:.1%}"
+    )
 
     trips = pd.DataFrame(od_tuples, columns=["from", "to", "tons"]).sort_values(["from", "to"])
     publish_metadata(context, trips)
@@ -122,4 +135,28 @@ def tap_marine_tons(
     )
     return _generate_tons_dataframe(
         context, in_network_marine_tons, county_fips_to_marine_network_node_idx
+    )
+
+
+@dagster.asset(
+    io_manager_key="custom_io_manager",
+    metadata={
+        "format": "parquet",
+        "write_kwargs": dagster.MetadataValue.json(
+            {"index": False},
+        ),
+        **INTERMEDIATE_DIRECTORY_ARGS,
+    },
+)
+def tap_rail_tons(
+    context: dagster.AssetExecutionContext,
+    county_to_county_rail_tons: pd.DataFrame,
+    county_fips_to_rail_network_node_idx: Dict[Tuple[str, str], int],
+) -> pd.DataFrame:
+    """Tons attached to the marine network nodes (from, to, tons)"""
+    in_network_rail_tons = _filter_tons_dataframe(
+        context, county_to_county_rail_tons, quantile_threshold=0.5
+    )
+    return _generate_tons_dataframe(
+        context, in_network_rail_tons, county_fips_to_rail_network_node_idx
     )

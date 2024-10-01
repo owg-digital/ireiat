@@ -1,9 +1,11 @@
 import dagster
+import igraph as ig
+import numpy as np
 import pandas as pd
 
 import ireiat.config as CONFIG
-from ireiat.util.rail_network_constants import EdgeType
 from ireiat.data_pipeline.metadata import publish_metadata
+from ireiat.util.rail_network_constants import EdgeType
 
 
 @dagster.asset(
@@ -46,28 +48,39 @@ def tap_highway_network_dataframe(
     },
 )
 def tap_rail_network_dataframe(
-    context: dagster.AssetExecutionContext, rail_network_dataframe: pd.DataFrame
+    context: dagster.AssetExecutionContext,
+    county_fips_to_rail_network_node_idx: dict[tuple[str, str], int],
+    rail_graph_with_county_connections: ig.Graph,
 ) -> pd.DataFrame:
     """Entire rail network to represent the TAP, complete with capacity and cost information"""
     # fill out other fields needed for the TAP
-    tap_network = rail_network_dataframe
 
-    if "speed" not in tap_network.columns:
-        # If the 'speed' column doesn't exist
-        tap_network["speed"] = CONFIG.RAIL_DEFAULT_MPH_SPEED
-    else:
-        # Fill missing values with the default value
-        tap_network["speed"] = tap_network["speed"].fillna(CONFIG.RAIL_DEFAULT_MPH_SPEED)
+    connected_edge_tuples = [
+        (e.source, e.target, e["length"], e["edge_type"], e["owners"], e["capacity"], e["speed"])
+        for e in rail_graph_with_county_connections.es
+    ]
 
+    # create and return a dataframe
+    tap_network = pd.DataFrame(
+        connected_edge_tuples,
+        columns=["tail", "head", "length", "edge_type", "owners", "capacity", "speed"],
+    )
+
+    tap_network["speed"] = tap_network["speed"].fillna(CONFIG.RAIL_DEFAULT_MPH_SPEED)
+    tap_network["length"] = tap_network["length"].fillna(0.1)
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
 
     # Apply beta and alpha based on edge type
-    tap_network["beta"] = tap_network["edge_type"].apply(
-        lambda x: CONFIG.RAIL_BETA_IM if x == EdgeType.IM_CAPACITY.value else CONFIG.RAIL_BETA
+    tap_network["beta"] = np.where(
+        tap_network["edge_type"] == EdgeType.IM_CAPACITY.value,
+        CONFIG.RAIL_BETA_IM,
+        CONFIG.RAIL_BETA,
     )
 
-    tap_network["alpha"] = tap_network["edge_type"].apply(
-        lambda x: CONFIG.RAIL_ALPHA_IM if x == EdgeType.IM_CAPACITY.value else CONFIG.RAIL_ALPHA
+    tap_network["alpha"] = np.where(
+        tap_network["edge_type"] == EdgeType.IM_CAPACITY.value,
+        CONFIG.RAIL_ALPHA_IM,
+        CONFIG.RAIL_ALPHA,
     )
 
     # TODO: Utilize "TRACKNUM" field from the railway dataset to base capacity on the actual number of tracks

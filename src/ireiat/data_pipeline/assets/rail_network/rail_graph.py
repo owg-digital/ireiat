@@ -282,26 +282,3 @@ def impedance_rail_graph_with_terminals(
     )
     assert impedance_rail_graph.is_connected()
     return impedance_rail_graph
-
-
-@dagster.asset(
-    io_manager_key="custom_io_manager",
-    metadata={"format": "parquet", **INTERMEDIATE_DIRECTORY_ARGS},
-)
-def rail_network_dataframe(
-    context: dagster.AssetExecutionContext, impedance_rail_graph_with_terminals: ig.Graph
-) -> pd.DataFrame:
-    """Returns a dataframe of graph edges along with attributes needed to solve the TAP"""
-    connected_edge_tuples = [
-        (e.source, e.target, e["length"], e["edge_type"], e["owners"], e["capacity"])
-        for e in impedance_rail_graph_with_terminals.es
-    ]
-
-    # create and return a dataframe
-    pdf = pd.DataFrame(
-        connected_edge_tuples,
-        columns=["tail", "head", "length", "edge_type", "owners", "capacity"],
-    )
-    context.log.info(f"Rail network dataframe created with {len(pdf)} edges.")
-    publish_metadata(context, pdf)
-    return pdf

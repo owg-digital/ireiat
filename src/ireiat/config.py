@@ -62,6 +62,9 @@ HIGHWAY_CAPACITY_TONS = (
 )
 HIGHWAY_BETA = 4  # the exponent in the congestion term
 HIGHWAY_ALPHA = 0.15  # the scalar in the congestion term
+HIGHWAY_DEFAULT_MPH_SPEED = (
+    50  # used in the rail network for county centroid connections to IM facilities
+)
 
 # Rail
 RAIL_DEFAULT_TERMINAL_CAPACITY_TONS = 100000
@@ -82,7 +85,8 @@ RR_MAPPING = {
     "KCSM": "CPKC",
     "JXPT": "JXP",
 }
-IM_CAPACITY_TONS = 500000 * 15  # assume 750K containers per year at 15 net tons per container
+IM_CAPACITY_TONS = 500000 * 15  # assume 500K containers per year at 15 net tons per container
+IM_SEARCH_RADIUS_MILES = 250  # radius to search around each county centroid
 
 # Marine
 MARINE_CAPACITY_TONS = 150000
