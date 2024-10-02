@@ -100,7 +100,7 @@ def rail_county_association(
     impedance_rail_graph_with_terminals_reduced: ig.Graph,
     county_fips_to_centroid: Dict[Tuple[str, str], Tuple[float, float]],
 ) -> Tuple[ig.Graph, Dict[Tuple[str, str], int]]:
-    """Add county centroids to rail impedance network with county centroids connected to nearby IM facilities"""
+    """Add county centroids to rail impedance network with county centroids connected to nearby IM facilities."""
 
     # unfortunately, there are several counties that may not have ANY intermodal facilities within a radius
     # we don't want to add these counties as vertices to the graph, so we need to filter them out first
@@ -170,7 +170,7 @@ def rail_county_association(
             for _ in range(2):
                 edge_attributes["length"].append(distance)
                 edge_attributes["edge_type"].append(EdgeType.COUNTY_TO_IM_LINK.value)
-                edge_attributes["speed"].append(HIGHWAY_DEFAULT_MPH_SPEED)
+                edge_attributes["speed"].append(HIGHWAY_DEFAULT_MPH_SPEED * 0.0001)
 
     g.add_edges(edges_to_add, attributes=edge_attributes)
 

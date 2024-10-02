@@ -57,7 +57,8 @@ def clear_cache():
 @click.option(
     "--max-gap", "-g", type=float, default=1e-8, help="The relative gap used in Algorithm B"
 )
-def solve(network_file: Path, od_file: Path, max_gap: float, output_file: str):
+@click.option("--max-iterations", "-i", type=int, default=1, help="Max iterations for Algorithm B")
+def solve(network_file: Path, od_file: Path, output_file: str, max_gap: float, max_iterations: int):
     """Runs the TAP solution in R using cppRouting"""
 
     # use the bundled 'tap.r' file as a "resource" and create a temporary file to be run by RScript
@@ -67,7 +68,16 @@ def solve(network_file: Path, od_file: Path, max_gap: float, output_file: str):
             tf.write(r_text.read())
 
     # pass the command for the RScript file
-    cmd = ["Rscript", tf.name, network_file, od_file, CACHE_PATH, str(max_gap), output_file]
+    cmd = [
+        "Rscript",
+        tf.name,
+        network_file,
+        od_file,
+        CACHE_PATH,
+        str(max_gap),
+        output_file,
+        str(max_iterations),
+    ]
     logger.info(f"Calling subprocess {cmd}")
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     # Read the output line by line as it becomes available

@@ -55,14 +55,14 @@ def tap_rail_network_dataframe(
     # fill out other fields needed for the TAP
 
     connected_edge_tuples = [
-        (e.source, e.target, e["length"], e["edge_type"], e["owners"], e["speed"])
+        (e.source, e.target, e["length"], e["edge_type"], e["owners"], e["speed"], e["tracks"])
         for e in rail_graph_with_county_connections.es
     ]
 
     # create and return a dataframe
     tap_network = pd.DataFrame(
         connected_edge_tuples,
-        columns=["tail", "head", "length", "edge_type", "owners", "speed"],
+        columns=["tail", "head", "length", "edge_type", "owners", "speed", "tracks"],
     )
 
     tap_network["speed"] = tap_network["speed"].fillna(CONFIG.RAIL_DEFAULT_MPH_SPEED)
@@ -71,10 +71,16 @@ def tap_rail_network_dataframe(
 
     # Apply beta and alpha based on edge type
     is_im_capacity_edge = tap_network["edge_type"] == EdgeType.IM_CAPACITY.value
+    is_rail_link_edge = tap_network["edge_type"] == EdgeType.RAIL_LINK.value
 
-    # TODO: Utilize "TRACKNUM" field from the railway dataset to base capacity on the actual number of tracks
     tap_network["capacity"] = np.where(
-        is_im_capacity_edge, CONFIG.IM_CAPACITY_TONS, CONFIG.RAIL_DEFAULT_LINK_CAPACITY_TONS
+        is_im_capacity_edge,
+        CONFIG.IM_CAPACITY_TONS,
+        np.where(
+            is_rail_link_edge,
+            tap_network["tracks"] * CONFIG.RAIL_CAPACITY_TONS_PER_TRACK,
+            CONFIG.RAIL_DEFAULT_LINK_CAPACITY_TONS,
+        ),
     )
     tap_network["beta"] = np.where(is_im_capacity_edge, CONFIG.RAIL_BETA_IM, CONFIG.RAIL_BETA)
     tap_network["alpha"] = np.where(is_im_capacity_edge, CONFIG.RAIL_ALPHA_IM, CONFIG.RAIL_ALPHA)
