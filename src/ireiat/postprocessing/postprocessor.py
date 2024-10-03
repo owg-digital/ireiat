@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import pyogrio
 
-from ireiat.config import CACHE_PATH
+from ireiat.config.constants import CACHE_PATH
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +96,7 @@ class PostProcessor:
         # assert len(flows_with_geometry) == len(grouped_traffic)
 
         non_zero_utilization = flows_with_geometry.loc[flows_with_geometry["utilization"] > 0]
+        logger.info(non_zero_utilization.describe())
         logger.info("Generating plots for congestion")
         fig, ax = plt.subplots(figsize=(15, 8))
         flows_with_geometry.plot(ax=ax, color="grey", alpha=0.2)

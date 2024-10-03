@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
-
-from ireiat.util.faf_constants import FAFCommodity
+from ireiat.config.faf_constants import FAFCommodity
 
 # cache-related parameters
 CACHE_PATH = Path(os.getenv("HOMEPATH", "~")) / ".ireiat"
 INTERMEDIATE_PATH = "intermediate"
+RAW_PATH = "raw"
 INTERMEDIATE_DIRECTORY_ARGS = {"source_path": INTERMEDIATE_PATH}
 
 # GIS-related parameters
@@ -65,9 +65,13 @@ HIGHWAY_ALPHA = 0.15  # the scalar in the congestion term
 HIGHWAY_DEFAULT_MPH_SPEED = (
     50  # used in the rail network for county centroid connections to IM facilities
 )
+HIGHWAY_DRAYAGE_PENALTY = 100  # factor to increase FFT by for drayage legs
+
 
 # Rail
-RAIL_DEFAULT_LINK_CAPACITY_TONS = 60000
+# TODO (NP): Actually figure this number out
+RAIL_CAPACITY_TONS_PER_TRACK = 1000  # million tons per track per year
+RAIL_DEFAULT_LINK_CAPACITY_TONS = 100_000  # large number
 RAIL_DEFAULT_MPH_SPEED = 20  # miles per hour
 # Beta - the exponent in the congestion term
 RAIL_BETA_IM = 1
@@ -85,8 +89,8 @@ RR_MAPPING = {
     "JXPT": "JXP",
 }
 IM_CAPACITY_TONS = (
-    500000 * 15 / 2 * 1e-6
-)  # assume 500K containers per year at 15 net tons per container
+    500000 * 15 * 1e-6
+)  # assume 500K containers per year at 15 net tons per container (could divide by 2)
 IM_SEARCH_RADIUS_MILES = 250  # radius to search around each county centroid
 
 # Marine

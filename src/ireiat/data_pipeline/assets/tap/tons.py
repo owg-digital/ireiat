@@ -3,7 +3,7 @@ from typing import Dict, Tuple, Optional
 import dagster
 import pandas as pd
 
-from ireiat.config import EXCLUDED_FIPS_CODES_MAP, INTERMEDIATE_DIRECTORY_ARGS
+from ireiat.config.constants import EXCLUDED_FIPS_CODES_MAP, INTERMEDIATE_DIRECTORY_ARGS
 from ireiat.data_pipeline.metadata import publish_metadata
 
 
@@ -155,7 +155,7 @@ def tap_rail_tons(
 ) -> pd.DataFrame:
     """Tons attached to the marine network nodes (from, to, tons)"""
     in_network_rail_tons = _filter_tons_dataframe(
-        context, county_to_county_rail_tons, quantile_threshold=0.99
+        context, county_to_county_rail_tons, quantile_threshold=0.6
     )
     return _generate_tons_dataframe(
         context, in_network_rail_tons, county_fips_to_rail_network_node_idx

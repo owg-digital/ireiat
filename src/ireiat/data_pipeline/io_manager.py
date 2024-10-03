@@ -9,7 +9,7 @@ import geopandas
 import pandas as pd
 import pyogrio
 
-from ireiat.config import CACHE_PATH
+from ireiat.config.constants import CACHE_PATH
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.http import download_uncached_file
 

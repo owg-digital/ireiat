@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import BallTree
 
-from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS, RR_MAPPING
+from ireiat.config.constants import INTERMEDIATE_DIRECTORY_ARGS, RR_MAPPING
 from ireiat.data_pipeline.assets.rail_network.impedance import generate_impedance_graph
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import (
@@ -17,7 +17,7 @@ from ireiat.util.graph import (
     generate_zero_based_node_maps,
     get_allowed_node_indices,
 )
-from ireiat.util.rail_network_constants import EdgeType, VertexType
+from ireiat.config.rail_network_constants import EdgeType, VertexType
 
 SEPARATION_ATTRIBUTE_NAME: str = "owners"  # field used to represent owners and trackage rights
 
@@ -57,9 +57,10 @@ def filtered_and_processed_rail_network_links(
     owner_set.apply(lambda x: x.update(["CSXT", "NS"]) if "PAS" in x else x)
 
     real_lines[SEPARATION_ATTRIBUTE_NAME] = owner_set
+    real_lines["TRACKS"] = real_lines["TRACKS"].replace(0, 1)
 
     # columns to retain
-    cols_to_retain = ["FRAARCID", "MILES", SEPARATION_ATTRIBUTE_NAME, "geometry"]
+    cols_to_retain = ["FRAARCID", "MILES", "TRACKS", SEPARATION_ATTRIBUTE_NAME, "geometry"]
     # exclude items with no owners at all
     real_lines_with_owners = real_lines.loc[
         real_lines[SEPARATION_ATTRIBUTE_NAME].apply(len) >= 1, cols_to_retain
@@ -83,7 +84,7 @@ def undirected_rail_edges(
     destination_lat, and destination_long, along with several other edge fields of interest"""
 
     link_coords = get_coordinates_from_geoframe(filtered_and_processed_rail_network_links)
-    fields_to_retain = ["FRAARCID", SEPARATION_ATTRIBUTE_NAME, "MILES"]
+    fields_to_retain = ["FRAARCID", SEPARATION_ATTRIBUTE_NAME, "MILES", "TRACKS"]
     link_coords = pd.concat(
         [filtered_and_processed_rail_network_links[fields_to_retain], link_coords], axis=1
     )  # join in the direction
@@ -115,7 +116,14 @@ def strongly_connected_rail_graph(
         )
 
         # record some original edge information needed for visualization and/or TAP setup
-        attribute_tuple = (row.MILES, row.FRAARCID, row.owners, origin_coords, destination_coords)
+        attribute_tuple = (
+            row.MILES,
+            row.FRAARCID,
+            row.owners,
+            origin_coords,
+            destination_coords,
+            row.TRACKS,
+        )
         edge_tuples.append((tail, head))
         edge_attributes.append(attribute_tuple)
         edge_tuples.append((head, tail))
@@ -134,6 +142,7 @@ def strongly_connected_rail_graph(
             "edge_type": [EdgeType.RAIL_LINK.value for _ in edge_attributes],
             "origin_coords": [attr[3] for attr in edge_attributes],
             "destination_coords": [attr[4] for attr in edge_attributes],
+            "tracks": [attr[5] for attr in edge_attributes],
         },
         directed=True,
     )

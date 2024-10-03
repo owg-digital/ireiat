@@ -2,7 +2,7 @@ import dagster
 
 from .assets import demand, highway_network, tap, rail_network, marine_network
 from .io_manager import TabularDataLocalIOManager
-from ..config import CACHE_PATH, INTERMEDIATE_PATH
+from ireiat.config.constants import CACHE_PATH, INTERMEDIATE_PATH
 
 # demand
 demand_assets = dagster.load_assets_from_package_module(demand, group_name="demand")
