@@ -5,7 +5,7 @@ import geopandas
 import igraph as ig
 import pandas as pd
 
-from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS
+from ireiat.config.constants import INTERMEDIATE_DIRECTORY_ARGS
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import (
     get_coordinates_from_geoframe,

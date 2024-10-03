@@ -6,7 +6,7 @@ from unittest.mock import create_autospec
 import dagster
 import pandas as pd
 
-from ireiat.config import CACHE_PATH
+from ireiat.config.constants import CACHE_PATH
 from ireiat.data_pipeline.io_manager import (
     _get_read_function,
     _get_fs_path,

@@ -1,11 +1,11 @@
 import os
 from pathlib import Path
-
-from ireiat.util.faf_constants import FAFCommodity
+from ireiat.config.faf_constants import FAFCommodity
 
 # cache-related parameters
 CACHE_PATH = Path(os.getenv("HOMEPATH", "~")) / ".ireiat"
 INTERMEDIATE_PATH = "intermediate"
+RAW_PATH = "raw"
 INTERMEDIATE_DIRECTORY_ARGS = {"source_path": INTERMEDIATE_PATH}
 
 # GIS-related parameters

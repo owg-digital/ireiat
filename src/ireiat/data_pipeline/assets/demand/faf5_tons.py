@@ -3,7 +3,7 @@ from typing import Dict, Tuple
 import dagster
 import pandas as pd
 
-from ireiat.config import (
+from ireiat.config.constants import (
     SUM_TONS_TOLERANCE,
     FAF_TONS_TARGET_FIELD,
     NON_CONTAINERIZABLE_COMMODITIES,
@@ -14,7 +14,7 @@ from ireiat.data_pipeline.assets.demand.faf5_helpers import (
     faf5_process_mode,
     faf5_compute_county_tons_for_mode,
 )
-from ireiat.util.faf_constants import FAFMode
+from ireiat.config.faf_constants import FAFMode
 
 
 @dagster.multi_asset(

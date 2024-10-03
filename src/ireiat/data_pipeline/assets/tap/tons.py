@@ -3,7 +3,7 @@ from typing import Dict, Tuple, Optional
 import dagster
 import pandas as pd
 
-from ireiat.config import EXCLUDED_FIPS_CODES_MAP, INTERMEDIATE_DIRECTORY_ARGS
+from ireiat.config.constants import EXCLUDED_FIPS_CODES_MAP, INTERMEDIATE_DIRECTORY_ARGS
 from ireiat.data_pipeline.metadata import publish_metadata
 
 

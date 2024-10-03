@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import BallTree
 
-from ireiat.config import INTERMEDIATE_DIRECTORY_ARGS, RR_MAPPING
+from ireiat.config.constants import INTERMEDIATE_DIRECTORY_ARGS, RR_MAPPING
 from ireiat.data_pipeline.assets.rail_network.impedance import generate_impedance_graph
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import (
@@ -17,7 +17,7 @@ from ireiat.util.graph import (
     generate_zero_based_node_maps,
     get_allowed_node_indices,
 )
-from ireiat.util.rail_network_constants import EdgeType, VertexType
+from ireiat.config.rail_network_constants import EdgeType, VertexType
 
 SEPARATION_ATTRIBUTE_NAME: str = "owners"  # field used to represent owners and trackage rights
 

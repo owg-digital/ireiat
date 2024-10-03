@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 import dagster
 import pandas as pd
 
-from ireiat.config import SUM_TONS_TOLERANCE
+from ireiat.config.constants import SUM_TONS_TOLERANCE
 
 
 @dagster.asset(

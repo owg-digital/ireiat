@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.neighbors import BallTree
 
-from ireiat.config import LATLONG_CRS
+from ireiat.config.constants import LATLONG_CRS
 
 
 def get_coordinates_from_geoframe(gdf: geopandas.GeoDataFrame) -> pd.DataFrame:

@@ -7,7 +7,7 @@ import igraph as ig
 import numpy as np
 from sklearn.neighbors import BallTree
 
-from ireiat.config import (
+from ireiat.config.constants import (
     EXCLUDED_FIPS_CODES_MAP,
     LATLONG_CRS,
     ALBERS_CRS,
@@ -15,7 +15,7 @@ from ireiat.config import (
     IM_SEARCH_RADIUS_MILES,
     HIGHWAY_DEFAULT_MPH_SPEED,
 )
-from ireiat.util.rail_network_constants import EdgeType, VertexType
+from ireiat.config.rail_network_constants import EdgeType, VertexType
 
 
 def _generate_network_indices_from_ball_tree(

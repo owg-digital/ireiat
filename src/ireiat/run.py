@@ -4,16 +4,25 @@ import shutil
 import subprocess
 from importlib import resources
 from pathlib import Path
+from typing import Optional
 
 import click
 
 from ireiat import r_source
-from ireiat.config import CACHE_PATH, INTERMEDIATE_PATH
+from ireiat.config.constants import CACHE_PATH
+from ireiat.config.config import (
+    run_config_map,
+    RunConfig,
+    PostprocessConfig,
+    postprocess_config_map,
+)
 from ireiat.postprocessing.postprocessor import PostProcessor
 from ireiat.util.logging_ import configure_logging
 
 configure_logging(output_file=True)
 logger = logging.getLogger(__name__)
+
+MODE_CHOICES = click.Choice(["highway", "marine", "rail"])
 
 
 @click.group()
@@ -37,29 +46,44 @@ def clear_cache():
     "--network-file",
     "-n",
     type=click.Path(exists=True),
-    help="A parquet file that represents the network to be used for the TAP",
-    default=CACHE_PATH / INTERMEDIATE_PATH / "tap_highway_network_dataframe.parquet",
 )
 @click.option(
     "--od-file",
     "-d",
     type=click.Path(exists=True),
     help="A parquet file that represents the demand to be used for the TAP",
-    default=CACHE_PATH / INTERMEDIATE_PATH / "tap_highway_tons.parquet",
 )
 @click.option(
     "--output-file",
     "-o",
-    type=click.STRING,
+    type=click.Path(),
     help="A parquet file to which the TAP results will be written",
-    default=CACHE_PATH / "highway_traffic.parquet",
+)
+@click.option(
+    "--mode",
+    "-m",
+    type=MODE_CHOICES,
+    help="If specified, uses defaults file outputs for the given mode unless other parameters are passed",
 )
 @click.option(
     "--max-gap", "-g", type=float, default=1e-8, help="The relative gap used in Algorithm B"
 )
 @click.option("--max-iterations", "-i", type=int, default=1, help="Max iterations for Algorithm B")
-def solve(network_file: Path, od_file: Path, output_file: str, max_gap: float, max_iterations: int):
+def solve(
+    network_file: Optional[Path],
+    od_file: Optional[Path],
+    output_file: Optional[Path],
+    mode: Optional[str],
+    max_gap: float,
+    max_iterations: int,
+):
     """Runs the TAP solution in R using cppRouting"""
+
+    config = run_config_map.get(mode, RunConfig)(
+        passed_network_file_path=network_file,
+        passed_od_file_path=od_file,
+        passed_output_file_path=output_file,
+    )
 
     # use the bundled 'tap.r' file as a "resource" and create a temporary file to be run by RScript
     temporary_file_path = CACHE_PATH / "local_tap.r"
@@ -71,11 +95,10 @@ def solve(network_file: Path, od_file: Path, output_file: str, max_gap: float, m
     cmd = [
         "Rscript",
         tf.name,
-        network_file,
-        od_file,
-        CACHE_PATH,
+        config.network_file_path,
+        config.od_file_path,
         str(max_gap),
-        output_file,
+        config.output_file_path,
         str(max_iterations),
     ]
     logger.info(f"Calling subprocess {cmd}")
@@ -94,26 +117,35 @@ def solve(network_file: Path, od_file: Path, output_file: str, max_gap: float, m
     "-s",
     type=click.Path(exists=True),
     help="Solution file representing assigned traffic",
-    default=CACHE_PATH / "highway_traffic.parquet",
 )
 @click.option(
     "--solution-graph",
     "-g",
     type=click.Path(exists=True),
     help="The strongly connected (pickled igraph) graph on which the problem has been solved",
-    default=CACHE_PATH / INTERMEDIATE_PATH / "strongly_connected_highway_graph",
 )
 @click.option(
     "--network-shp",
     "-n",
     type=click.Path(exists=True),
     help="The shp file used to represent the underlying network to enable visualization",
-    default=CACHE_PATH / "raw/faf5_highway_links.zip",
 )
-def postprocess(solution: Path, solution_graph: Path, network_shp: Path):
+@click.option(
+    "--mode",
+    "-m",
+    type=MODE_CHOICES,
+    help="If specified, uses defaults file outputs for the given mode unless other parameters are passed",
+)
+def postprocess(solution: Path, solution_graph: Path, network_shp: Path, mode: str):
     """Post processes results and save in the default configured cache path"""
     logger.info("Running postprocessing.")
-    pp = PostProcessor(solution, solution_graph, network_shp)
+    config = postprocess_config_map.get(mode, PostprocessConfig)(
+        passed_traffic_path=solution,
+        passed_network_graph_path=solution_graph,
+        passed_shp_file_path=network_shp,
+    )
+
+    pp = PostProcessor(config.traffic_file_path, config.network_graph_path, config.shp_file_path)
     pp.postprocess()
 
 
