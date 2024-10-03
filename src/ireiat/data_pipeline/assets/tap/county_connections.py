@@ -14,6 +14,7 @@ from ireiat.config.constants import (
     RADIUS_EARTH_MILES,
     IM_SEARCH_RADIUS_MILES,
     HIGHWAY_DEFAULT_MPH_SPEED,
+    HIGHWAY_DRAYAGE_PENALTY,
 )
 from ireiat.config.rail_network_constants import EdgeType, VertexType
 
@@ -170,7 +171,7 @@ def rail_county_association(
             for _ in range(2):
                 edge_attributes["length"].append(distance)
                 edge_attributes["edge_type"].append(EdgeType.COUNTY_TO_IM_LINK.value)
-                edge_attributes["speed"].append(HIGHWAY_DEFAULT_MPH_SPEED * 0.0001)
+                edge_attributes["speed"].append(HIGHWAY_DEFAULT_MPH_SPEED / HIGHWAY_DRAYAGE_PENALTY)
 
     g.add_edges(edges_to_add, attributes=edge_attributes)
 
