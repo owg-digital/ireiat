@@ -71,7 +71,7 @@ HIGHWAY_DRAYAGE_PENALTY = 100  # factor to increase FFT by for drayage legs
 # Rail
 # TODO (NP): Actually figure this number out
 RAIL_CAPACITY_TONS_PER_TRACK = 1000  # million tons per track per year
-RAIL_DEFAULT_LINK_CAPACITY_TONS = 1000  # large number
+RAIL_DEFAULT_LINK_CAPACITY_TONS = 100_000  # large number
 RAIL_DEFAULT_MPH_SPEED = 20  # miles per hour
 # Beta - the exponent in the congestion term
 RAIL_BETA_IM = 1
