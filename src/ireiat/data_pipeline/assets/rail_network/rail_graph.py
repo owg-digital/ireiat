@@ -17,7 +17,7 @@ from ireiat.util.graph import (
     generate_zero_based_node_maps,
     get_allowed_node_indices,
 )
-from ireiat.config.rail_network_constants import EdgeType, VertexType
+from ireiat.config.rail_enum import EdgeType, VertexType
 
 SEPARATION_ATTRIBUTE_NAME: str = "owners"  # field used to represent owners and trackage rights
 

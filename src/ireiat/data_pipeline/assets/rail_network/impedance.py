@@ -3,7 +3,7 @@ from typing import Tuple, Set, Dict, Any
 
 import igraph as ig
 
-from ireiat.config.rail_network_constants import EdgeType
+from ireiat.config.rail_enum import EdgeType
 
 
 def _generate_subgraphs(g: ig.Graph, separation_attribute: str = "owner") -> Dict[str, ig.Graph]:

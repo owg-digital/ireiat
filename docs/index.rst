@@ -10,13 +10,14 @@ Welcome to IREIAT's documentation!
    :maxdepth: 1
    :caption: Contents:
 
+   quickstart
    cli/commands
    demand/faf
    network/highway_network
    network/rail_network
 
 
-We are actively working on it.
+The current repo is under active development.
 
 Indices and tables
 ==================
