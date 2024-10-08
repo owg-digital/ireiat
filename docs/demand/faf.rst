@@ -2,8 +2,7 @@ Demand
 ======
 
 We use FAF to source all origin-destination demand for "containerizable"
-freight. The list of excluded commodity codes is detailed in
-:data:`ireiat.config.NON_CONTAINERIZABLE_COMMODITIES`.
+freight. The list of excluded commodity codes is detailed in :code:`DemandConfig`.
 
 The FAF dataset is subset by filtering out non-containerizable commodities.
 Once the containerizable demand is isolated, we further divide the data by transportation
@@ -58,9 +57,6 @@ Summary
 Each dataset represents the total tons of demand between origin-destination pairs for that specific mode of transportation,
 including any reassigned demand from unknown modes.
 
-Currently, there are no configurable CLI options for the data pipeline.
 
 .. automodule:: ireiat.config.faf_enum
     :members:
-
-.. autodata:: ireiat.config.constants.NON_CONTAINERIZABLE_COMMODITIES
