@@ -10,7 +10,7 @@ import click
 
 from ireiat import r_source
 from ireiat.config.constants import CACHE_PATH
-from ireiat.config.runtime_config import (
+from ireiat.config.runtime import (
     run_config_map,
     RunConfig,
     PostprocessConfig,
