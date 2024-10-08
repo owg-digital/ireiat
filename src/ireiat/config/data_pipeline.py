@@ -2,15 +2,6 @@ from dagster import Config
 from pydantic import Field
 
 
-def faf_commodity_dict_from_args(name, sctg2, containerizable, pct):
-    return {
-        "name": name,
-        "sctg2": sctg2,
-        "containerizable": containerizable,
-        "percentage_containerizable": pct,
-    }
-
-
 class FAFCommodity(Config):
     """Single FAF Commodity"""
 
