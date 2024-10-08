@@ -60,7 +60,7 @@ including any reassigned demand from unknown modes.
 
 Currently, there are no configurable CLI options for the data pipeline.
 
-.. automodule:: ireiat.util.faf_constants
+.. automodule:: ireiat.config.faf_enum
     :members:
 
-.. autodata:: ireiat.config.NON_CONTAINERIZABLE_COMMODITIES
+.. autodata:: ireiat.config.constants.NON_CONTAINERIZABLE_COMMODITIES

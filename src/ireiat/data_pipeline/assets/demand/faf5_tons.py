@@ -5,16 +5,16 @@ import pandas as pd
 
 from ireiat.config.constants import (
     SUM_TONS_TOLERANCE,
-    FAF_TONS_TARGET_FIELD,
     NON_CONTAINERIZABLE_COMMODITIES,
     INTERMEDIATE_DIRECTORY_ARGS,
 )
-from ireiat.data_pipeline.metadata import publish_metadata
+from ireiat.config.data_pipeline import DataPipelineConfig
+from ireiat.config.faf_enum import FAFMode
 from ireiat.data_pipeline.assets.demand.faf5_helpers import (
     faf5_process_mode,
     faf5_compute_county_tons_for_mode,
 )
-from ireiat.config.faf_constants import FAFMode
+from ireiat.data_pipeline.metadata import publish_metadata
 
 
 @dagster.multi_asset(
@@ -34,7 +34,9 @@ from ireiat.config.faf_constants import FAFMode
     }
 )
 def faf5_demand_by_mode(
-    context: dagster.AssetExecutionContext, faf5_demand_src: pd.DataFrame
+    context: dagster.AssetExecutionContext,
+    faf5_demand_src: pd.DataFrame,
+    config: DataPipelineConfig,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Multi-asset function to extract demand data for different transport modes (Truck, Rail, Water).
@@ -54,14 +56,14 @@ def faf5_demand_by_mode(
 
     # Aggregate by origin/destination for known modes
     known_agg_pdf = known_modes_pdf.groupby(["dms_orig", "dms_dest", "dms_mode"], as_index=False)[
-        [FAF_TONS_TARGET_FIELD]
+        [config.faf_demand_field]
     ].sum()
 
     # Pivot by origin/destination to calculate percentages for each mode
     mode_pivot_pdf = known_agg_pdf.pivot_table(
         index=["dms_orig", "dms_dest"],
         columns="dms_mode",
-        values=FAF_TONS_TARGET_FIELD,
+        values=config.faf_demand_field,
         fill_value=0,
     )
 
@@ -105,7 +107,7 @@ def faf5_demand_by_mode(
         FAFMode.TRUCK.value,
         "truck_tons",
         "truck_pct",
-        FAF_TONS_TARGET_FIELD,
+        config.faf_demand_field,
     )
     rail_pdf = faf5_process_mode(
         common_modes_pdf,
@@ -113,7 +115,7 @@ def faf5_demand_by_mode(
         FAFMode.RAIL.value,
         "rail_tons",
         "rail_pct",
-        FAF_TONS_TARGET_FIELD,
+        config.faf_demand_field,
     )
     water_pdf = faf5_process_mode(
         common_modes_pdf,
@@ -121,7 +123,7 @@ def faf5_demand_by_mode(
         FAFMode.WATER.value,
         "water_tons",
         "water_pct",
-        FAF_TONS_TARGET_FIELD,
+        config.faf_demand_field,
     )
 
     # Log and store the dataframes
@@ -159,6 +161,7 @@ def county_to_county_tons(
     faf5_rail_demand: pd.DataFrame,
     faf5_water_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
+    config: DataPipelineConfig,
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Multi-asset function to calculate (State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons
@@ -169,21 +172,21 @@ def county_to_county_tons(
     non_zero_truck_county_od_pdf = faf5_compute_county_tons_for_mode(
         faf5_truck_demand,
         faf_id_to_county_id_allocation_map,
-        FAF_TONS_TARGET_FIELD,
+        config.faf_demand_field,
         SUM_TONS_TOLERANCE,
         "Truck",
     )
     non_zero_rail_county_od_pdf = faf5_compute_county_tons_for_mode(
         faf5_rail_demand,
         faf_id_to_county_id_allocation_map,
-        FAF_TONS_TARGET_FIELD,
+        config.faf_demand_field,
         SUM_TONS_TOLERANCE,
         "Rail",
     )
     non_zero_water_county_od_pdf = faf5_compute_county_tons_for_mode(
         faf5_water_demand,
         faf_id_to_county_id_allocation_map,
-        FAF_TONS_TARGET_FIELD,
+        config.faf_demand_field,
         SUM_TONS_TOLERANCE,
         "Water",
     )
