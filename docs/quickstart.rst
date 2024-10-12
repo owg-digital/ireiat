@@ -1,14 +1,30 @@
 Quickstart
 ==========
 
-Run the data pipeline.
+Run the data pipeline, which locally saves artifacts needed to solve the TAP across modes.
 
 .. code-block::
 
-   dagster job execute -m ireiat.data_pipeline -j all
+   dagster job execute -m ireiat.data_pipeline -j all --config some_config.yaml
 
-Solve a traffic assignment problem for a particular mode.
+Solve a traffic assignment problem for a particular mode (highway, rail, or marine).
 
 .. code-block::
 
    ireiat solve -m rail
+
+Example output looks like:
+
+.. csv-table:: Example traffic output parquet file
+   :file: _static/traffic_example.csv
+   :widths: 30, 30, 30, 30, 30, 30, 30, 30
+   :header-rows: 1
+
+Create postprocessing artifacts once the solution files exist.
+
+.. code-block::
+
+   ireiat postprocess -m highway
+
+Postprocessing takes the traffic data with the relevant network and plots
+utilization across the network, which can highlight areas of congestion.

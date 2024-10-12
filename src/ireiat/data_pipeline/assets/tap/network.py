@@ -6,7 +6,7 @@ import pandas as pd
 from ireiat.config.constants import (
     INTERMEDIATE_DIRECTORY_ARGS,
 )
-from ireiat.config.data_pipeline import DataPipelineConfig
+from ireiat.config.data_pipeline import TAPNetworkConfig, TAPRailConfig
 from ireiat.config.rail_enum import EdgeType
 from ireiat.data_pipeline.metadata import publish_metadata
 
@@ -22,7 +22,7 @@ from ireiat.data_pipeline.metadata import publish_metadata
 def tap_highway_network_dataframe(
     context: dagster.AssetExecutionContext,
     highway_network_dataframe: pd.DataFrame,
-    config: DataPipelineConfig,
+    config: TAPNetworkConfig,
 ) -> pd.DataFrame:
     """Entire highway network to represent the TAP, complete with capacity and cost information"""
     # fill out other fields needed for the TAP
@@ -33,9 +33,9 @@ def tap_highway_network_dataframe(
     # replace any zero speeds with the mean speed
     tap_network["speed"] = tap_network["speed"].replace(0, tap_network["speed"].mean())
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
-    tap_network["beta"] = config.highway_config.highway_edge_beta
-    tap_network["alpha"] = config.highway_config.highway_edge_alpha
-    tap_network["capacity"] = config.highway_config.default_capacity_ktons
+    tap_network["beta"] = config.default_network_beta
+    tap_network["alpha"] = config.default_network_alpha
+    tap_network["capacity"] = config.default_capacity_ktons
     tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0
@@ -55,7 +55,7 @@ def tap_highway_network_dataframe(
 def tap_rail_network_dataframe(
     context: dagster.AssetExecutionContext,
     rail_graph_with_county_connections: ig.Graph,
-    config: DataPipelineConfig,
+    config: TAPRailConfig,
 ) -> pd.DataFrame:
     """Entire rail network to represent the TAP, complete with capacity and cost information"""
     # fill out other fields needed for the TAP
@@ -71,7 +71,7 @@ def tap_rail_network_dataframe(
         columns=["tail", "head", "length", "edge_type", "owners", "speed", "tracks"],
     )
 
-    tap_network["speed"] = tap_network["speed"].fillna(config.rail_config.default_speed_mph)
+    tap_network["speed"] = tap_network["speed"].fillna(config.default_speed_mph)
     tap_network["length"] = tap_network["length"].fillna(0.1)
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
 
@@ -81,22 +81,22 @@ def tap_rail_network_dataframe(
 
     tap_network["capacity"] = np.where(
         is_im_capacity_edge,
-        config.rail_config.intermodal_facility_capacity_ktons,
+        config.intermodal_facility_capacity_ktons,
         np.where(
             is_rail_link_edge,
-            tap_network["tracks"] * config.rail_config.capacity_ktons_per_track,
-            config.rail_config.capacity_ktons_default,
+            tap_network["tracks"] * config.capacity_ktons_per_track,
+            config.capacity_ktons_default,
         ),
     )
     tap_network["beta"] = np.where(
         is_im_capacity_edge,
-        config.rail_config.intermodal_edge_beta,
-        config.rail_config.rail_network_beta,
+        config.intermodal_edge_beta,
+        config.default_network_beta,
     )
     tap_network["alpha"] = np.where(
         is_im_capacity_edge,
-        config.rail_config.intermodal_edge_alpha,
-        config.rail_config.rail_network_alpha,
+        config.intermodal_edge_alpha,
+        config.default_network_alpha,
     )
 
     tap_network = tap_network.sort_values(["tail", "head"])
@@ -118,7 +118,7 @@ def tap_rail_network_dataframe(
 def tap_marine_network_dataframe(
     context: dagster.AssetExecutionContext,
     marine_network_dataframe: pd.DataFrame,
-    config: DataPipelineConfig,
+    config: TAPNetworkConfig,
 ) -> pd.DataFrame:
     """Entire marine network to represent the TAP, complete with capacity and cost information"""
     # fill out other fields needed for the TAP
@@ -126,15 +126,15 @@ def tap_marine_network_dataframe(
 
     if "speed" not in tap_network.columns:
         # If the 'speed' column doesn't exist
-        tap_network["speed"] = config.marine_config.default_speed_mph
+        tap_network["speed"] = config.default_speed_mph
     else:
         # Fill missing values with the default value
-        tap_network["speed"] = tap_network["speed"].fillna(config.marine_config.default_speed_mph)
+        tap_network["speed"] = tap_network["speed"].fillna(config.default_speed_mph)
 
     tap_network["fft"] = tap_network["length"] / tap_network["speed"]
-    tap_network["beta"] = config.marine_config.marine_edge_beta
-    tap_network["alpha"] = config.marine_config.marine_edge_alpha
-    tap_network["capacity"] = config.marine_config.default_capacity_ktons
+    tap_network["beta"] = config.default_network_beta
+    tap_network["alpha"] = config.default_network_alpha
+    tap_network["capacity"] = config.default_capacity_ktons
     tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0

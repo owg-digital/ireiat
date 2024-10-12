@@ -7,14 +7,13 @@ Welcome to IREIAT's documentation!
 ==================================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents:
 
    quickstart
    cli/commands
    demand/faf
-   network/highway_network
-   network/rail_network
+   network/index
 
 
 The current repo is under active development.
