@@ -4,6 +4,7 @@ import dagster
 import pandas as pd
 
 from ireiat.config.constants import EXCLUDED_FIPS_CODES_MAP, INTERMEDIATE_DIRECTORY_ARGS
+from ireiat.config.data_pipeline import TAPFilterTonsConfig
 from ireiat.data_pipeline.metadata import publish_metadata
 
 
@@ -104,10 +105,11 @@ def tap_highway_tons(
     context: dagster.AssetExecutionContext,
     county_to_county_highway_tons: pd.DataFrame,
     county_fips_to_highway_network_node_idx: Dict[Tuple[str, str], int],
+    config: TAPFilterTonsConfig,
 ) -> pd.DataFrame:
     """Tons attached to the highway network nodes (from, to, tons)"""
     in_network_highway_tons = _filter_tons_dataframe(
-        context, county_to_county_highway_tons, quantile_threshold=0.999
+        context, county_to_county_highway_tons, quantile_threshold=config.quantile_threshold
     )
     return _generate_tons_dataframe(
         context, in_network_highway_tons, county_fips_to_highway_network_node_idx
@@ -128,10 +130,11 @@ def tap_marine_tons(
     context: dagster.AssetExecutionContext,
     county_to_county_marine_tons: pd.DataFrame,
     county_fips_to_marine_network_node_idx: Dict[Tuple[str, str], int],
+    config: TAPFilterTonsConfig,
 ) -> pd.DataFrame:
     """Tons attached to the marine network nodes (from, to, tons)"""
     in_network_marine_tons = _filter_tons_dataframe(
-        context, county_to_county_marine_tons, quantile_threshold=0.5
+        context, county_to_county_marine_tons, quantile_threshold=config.quantile_threshold
     )
     return _generate_tons_dataframe(
         context, in_network_marine_tons, county_fips_to_marine_network_node_idx
@@ -152,10 +155,11 @@ def tap_rail_tons(
     context: dagster.AssetExecutionContext,
     county_to_county_rail_tons: pd.DataFrame,
     county_fips_to_rail_network_node_idx: Dict[Tuple[str, str], int],
+    config: TAPFilterTonsConfig,
 ) -> pd.DataFrame:
     """Tons attached to the marine network nodes (from, to, tons)"""
     in_network_rail_tons = _filter_tons_dataframe(
-        context, county_to_county_rail_tons, quantile_threshold=0.6
+        context, county_to_county_rail_tons, quantile_threshold=config.quantile_threshold
     )
     return _generate_tons_dataframe(
         context, in_network_rail_tons, county_fips_to_rail_network_node_idx

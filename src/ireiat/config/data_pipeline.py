@@ -1,5 +1,10 @@
+from typing import Optional
+
+import yaml
 from dagster import Config
 from pydantic import Field
+
+FAF5_DEFAULT_TONS_FIELD = "tons_2022"
 
 
 class FAFCommodity(Config):
@@ -68,31 +73,64 @@ def default_faf_commodity_factory() -> list[FAFCommodity]:
     ]
 
 
-class DemandConfig(Config):
-    """Contains FAF filter configuration. See FAF SCTG2 codes.
-    https://www.bts.gov/sites/bts.dot.gov/files/2021-02/FAF5-User-Guide.pdf
-    """
+class FAF5MasterConfig(Config):
+    """Parent class to allow us to inject the FAF demand field into child classes"""
 
-    unknown_mode_percent_truck: float = Field(
-        default=0.3,
-        description="Percentage of mixed mode FAF demand to allocate to highway network",
+    faf_demand_field: str = Field(
+        default=FAF5_DEFAULT_TONS_FIELD,
+        description="The field in FAF used to aggregate demand ( in tons)",
     )
-    unknown_mode_percent_rail: float = Field(
-        default=0.4, description="Percentage of mixed mode FAF demand to allocate to rail network"
-    )
-    unknown_mode_percent_marine: float = Field(
-        default=0.3, description="Percentage of mixed mode FAF demand to allocat to marine network"
-    )
+
+
+class FAF5FilterConfig(FAF5MasterConfig):
+    """Allocates whether FAF commodities are considered as part of the demand. See FAF SCTG2 codes.
+    https://www.bts.gov/sites/bts.dot.gov/files/2021-02/FAF5-User-Guide.pdf"""
+
     faf_commodities: list[FAFCommodity] = Field(default_factory=default_faf_commodity_factory)
 
 
-class RailConfig(Config):
-    """Adjustable configuration parameters for running the rail network"""
+class FAF5DemandConfig(FAF5MasterConfig):
+    """Used to group and allocate unknown modes to this mode"""
+
+    unknown_mode_percent: float = Field(
+        default=0.3,
+        description="Percentage of mixed mode FAF demand to allocate to the given modal network",
+    )
+
+
+class TAPFilterTonsConfig(Config):
+    """Used to specify an optional quantile threshold to filter county|county tons for the mode"""
+
+    quantile_threshold: Optional[float] = Field(
+        default=0.99,
+        description="If specified, only includes a county|county highway tonnage above the quantile value",
+    )
+
+
+class TAPNetworkConfig(Config):
+    """Used to specify default configuration parameters"""
 
     default_speed_mph: int = Field(
         default=20,
         description="Default speed to use for (non-dray) rail links in the rail TAP network",
     )
+    default_capacity_ktons: int = Field(
+        default=100_000,
+        description="Default capacity (in kilotons) to use for network edges without a custom capacity",
+    )
+    default_network_alpha: float = Field(
+        default=0.1,
+        description="Scalar, alpha, in TAP congestion term (alpha * (flow/capacity) ^ beta)",
+    )
+    default_network_beta: float = Field(
+        default=2.0,
+        description="Exponent, beta, in TAP congestion term (alpha * (flow/capacity) ^ beta)",
+    )
+
+
+class TAPRailConfig(TAPNetworkConfig):
+    """Adjustable configuration parameters for running the rail network"""
+
     dray_default_speed_mph: int = Field(
         default=50, description="Default speed for drayage legs (for road segments) in the rail TAP"
     )
@@ -118,14 +156,6 @@ class RailConfig(Config):
         default=7500,
         description="Default capacity (in kiltons) to use for IM facility inlet/outlet edges",
     )
-    rail_network_alpha: float = Field(
-        default=0.1,
-        description="Scalar, alpha, in TAP congestion term (alpha * (flow/capacity) ^ beta) for rail links",
-    )
-    rail_network_beta: float = Field(
-        default=2.0,
-        description="Exponent, beta, in TAP congestion term (alpha * (flow/capacity) ^ beta) for rail links",
-    )
     intermodal_edge_alpha: float = Field(
         default=1,
         description="Scalar, alpha, in TAP congestion term (alpha * (flow/capacity) ^ beta) for IM capacity links",
@@ -136,48 +166,62 @@ class RailConfig(Config):
     )
 
 
-class HighwayConfig(Config):
-    """Adjustable configuration parameters for running the highway network"""
+default_tap_marine_config = TAPNetworkConfig(
+    **{
+        "default_speed_mph": 15,
+        "default_capacity_ktons": 60_000,
+        "default_network_alpha": 0.1,
+        "default_network_beta": 2,
+    }
+)
 
-    default_capacity_ktons: int = Field(
-        default=70_000,
-        description="Default capacity (in kilotons) for each edge of the highway network",
-    )
-    highway_edge_alpha: float = Field(
-        default=0.15,
-        description="Scalar, alpha, in TAP congestion term (alpha * (flow/capacity) ^ beta) for highway links",
-    )
-    highway_edge_beta: float = Field(
-        default=4,
-        description="Exponent, beta, in TAP congestion term (alpha * (flow/capacity) ^ beta) for highway links",
-    )
+default_tap_highway_config = TAPNetworkConfig(
+    **{
+        "default_speed_mph": 50,
+        "default_capacity_ktons": 100_000,
+        "default_network_alpha": 0.15,
+        "default_network_beta": 4,
+    }
+)
+
+default_tap_rail_config = TAPRailConfig(
+    **{
+        "default_speed_mph": 20,
+        "default_capacity_ktons": 100_000,
+        "default_network_alpha": 0.1,
+        "default_network_beta": 2.0,
+    }
+)
 
 
-class MarineConfig(Config):
-    """Adjustable configuration parameters for running the marine network"""
-
-    default_capacity_ktons: int = Field(
-        default=150_000,
-        description="Default capacity (in kilotons) for each edge of the marine network",
-    )
-    default_speed_mph: int = Field(
-        default=15, description="Default transit speed (miles per hour) on the marine network"
-    )
-    marine_edge_alpha: float = Field(
-        default=0.01,
-        description="Scalar, alpha, in TAP congestion term (alpha * (flow/capacity) ^ beta) for marine links",
-    )
-    marine_edge_beta: float = Field(
-        default=4,
-        description="Exponent, beta, in TAP congestion term (alpha * (flow/capacity) ^ beta) for marine links",
-    )
+def default_asset_mapping() -> dict:
+    return {
+        "faf_filtered_grouped_tons": {"config": FAF5FilterConfig()},
+        "faf5_truck_demand": {"config": FAF5DemandConfig(**{"unknown_mode_percent": 0.3})},
+        "faf5_rail_demand": {"config": FAF5DemandConfig(**{"unknown_mode_percent": 0.5})},
+        "faf5_water_demand": {"config": FAF5DemandConfig(**{"unknown_mode_percent": 0.2})},
+        "county_to_county_highway_tons": {"config": FAF5MasterConfig()},
+        "county_to_county_rail_tons": {"config": FAF5MasterConfig()},
+        "county_to_county_marine_tons": {"config": FAF5MasterConfig()},
+        "tap_highway_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.999})},
+        "tap_rail_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.9})},
+        "tap_marine_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.6})},
+        "tap_highway_network_dataframe": {"config": default_tap_highway_config},
+        "tap_rail_network_dataframe": {"config": default_tap_rail_config},
+        "tap_marine_network_dataframe": {"config": default_tap_marine_config},
+    }
 
 
 class DataPipelineConfig(Config):
-    faf_demand_field: str = Field(
-        default="tons_2022", description="The field in FAF used to aggregate demand ( in tons)"
+    """Follows Dagster's specific configuration requirements for asset-specific configs"""
+
+    ops: dict = Field(
+        default_factory=default_asset_mapping,
+        description="List of assets and associated configuration",
     )
-    rail_config: RailConfig = RailConfig()
-    highway_config: HighwayConfig = HighwayConfig()
-    marine_config: MarineConfig = MarineConfig()
-    demand_config: DemandConfig = DemandConfig()
+
+
+# only used to update the root config file from the IDE when doing local dev (providing an example file)
+if __name__ == "__main__":
+    with open("../../../data/config.yaml", "w") as fp:
+        yaml.dump(DataPipelineConfig().dict(), fp)

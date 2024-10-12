@@ -13,6 +13,24 @@ initiate the dagster UI is below. Once the UI is started, individual assets or j
 and running :code:`dagster --help` should provide the needed CLI options. Note that the Dagster
 UI can be started with :code:`dagster dev`.
 
+Configuration parameters are available by passing a yaml file to the run of the data pipeline.
+
+A subset of a yaml configuration file is shown below:
+
+.. code-block:: yaml
+
+    ops:
+      county_to_county_highway_tons:
+        config:
+          faf_demand_field: tons_2022
+      faf5_truck_demand:
+        config:
+          faf_demand_field: tons_2022
+          unknown_mode_percent: 0.3
+
+See the repo under :code:`data/config.yaml` for a full example of all configurable parameters for
+the data pipeline.
+
 Application-specific commands
 =============================
 

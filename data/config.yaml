@@ -1,0 +1,229 @@
+ops:
+  county_to_county_highway_tons:
+    config:
+      faf_demand_field: tons_2022
+  county_to_county_marine_tons:
+    config:
+      faf_demand_field: tons_2022
+  county_to_county_rail_tons:
+    config:
+      faf_demand_field: tons_2022
+  faf5_rail_demand:
+    config:
+      faf_demand_field: tons_2022
+      unknown_mode_percent: 0.5
+  faf5_truck_demand:
+    config:
+      faf_demand_field: tons_2022
+      unknown_mode_percent: 0.3
+  faf5_water_demand:
+    config:
+      faf_demand_field: tons_2022
+      unknown_mode_percent: 0.2
+  faf_filtered_grouped_tons:
+    config:
+      faf_commodities:
+      - containerizable: false
+        name: LIVE_ANIMALS_FISH
+        percentage_containerizable: 0.0
+        sctg2: '01'
+      - containerizable: false
+        name: CEREAL_GRAINS
+        percentage_containerizable: 0.0
+        sctg2: '02'
+      - containerizable: false
+        name: OTHER_AG_PRODS
+        percentage_containerizable: 0.0
+        sctg2: '03'
+      - containerizable: false
+        name: ANIMAL_FEED
+        percentage_containerizable: 0.0
+        sctg2: '04'
+      - containerizable: true
+        name: MEAT_SEAFOOD
+        percentage_containerizable: 0.159
+        sctg2: '05'
+      - containerizable: true
+        name: MILLED_GRAIN_PRODS
+        percentage_containerizable: 0.018
+        sctg2: '06'
+      - containerizable: true
+        name: OTHER_FOODSTUFFS
+        percentage_containerizable: 0.504
+        sctg2: '07'
+      - containerizable: true
+        name: ALCOHOLIC_BEVERAGES
+        percentage_containerizable: 0.455
+        sctg2: 08
+      - containerizable: true
+        name: TOBACCO_PRODS
+        percentage_containerizable: 1.0
+        sctg2: 09
+      - containerizable: false
+        name: BUILDING_STONE
+        percentage_containerizable: 0.0
+        sctg2: '10'
+      - containerizable: false
+        name: NATURAL_SANDS
+        percentage_containerizable: 0.0
+        sctg2: '11'
+      - containerizable: false
+        name: GRAVEL
+        percentage_containerizable: 0.0
+        sctg2: '12'
+      - containerizable: false
+        name: NONMETALLIC_MINERALS
+        percentage_containerizable: 0.0
+        sctg2: '13'
+      - containerizable: false
+        name: METALLIC_ORES
+        percentage_containerizable: 0.0
+        sctg2: '14'
+      - containerizable: false
+        name: COAL
+        percentage_containerizable: 0.0
+        sctg2: '15'
+      - containerizable: false
+        name: CRUDE_PETROLEUM
+        percentage_containerizable: 0.0
+        sctg2: '16'
+      - containerizable: false
+        name: GASOLINE
+        percentage_containerizable: 0.0
+        sctg2: '17'
+      - containerizable: false
+        name: FUEL_OILS
+        percentage_containerizable: 0.0
+        sctg2: '18'
+      - containerizable: false
+        name: NATURAL_GAS_AND_OTHER_FOSSIL_PRODUCTS
+        percentage_containerizable: 0.0
+        sctg2: '19'
+      - containerizable: false
+        name: BASIC_CHEMICALS
+        percentage_containerizable: 0.0
+        sctg2: '20'
+      - containerizable: true
+        name: PHARMACEUTICALS
+        percentage_containerizable: 0.578
+        sctg2: '21'
+      - containerizable: false
+        name: FERTILIZERS
+        percentage_containerizable: 0.0
+        sctg2: '22'
+      - containerizable: true
+        name: CHEMICAL_PRODS
+        percentage_containerizable: 0.016
+        sctg2: '23'
+      - containerizable: true
+        name: PLASTICS_RUBBER
+        percentage_containerizable: 0.056
+        sctg2: '24'
+      - containerizable: false
+        name: LOGS
+        percentage_containerizable: 0.0
+        sctg2: '25'
+      - containerizable: false
+        name: WOOD_PRODS
+        percentage_containerizable: 0.0
+        sctg2: '26'
+      - containerizable: false
+        name: NEWSPRINT_PAPER
+        percentage_containerizable: 0.0
+        sctg2: '27'
+      - containerizable: true
+        name: PAPER_ARTICLES
+        percentage_containerizable: 0.998
+        sctg2: '28'
+      - containerizable: true
+        name: PRINTED_PRODS
+        percentage_containerizable: 1.0
+        sctg2: '29'
+      - containerizable: true
+        name: TEXTILES_LEATHER
+        percentage_containerizable: 0.02
+        sctg2: '30'
+      - containerizable: false
+        name: NONMETAL_MIN_PRODS
+        percentage_containerizable: 0.0
+        sctg2: '31'
+      - containerizable: false
+        name: BASE_METALS
+        percentage_containerizable: 0.0
+        sctg2: '32'
+      - containerizable: true
+        name: ARTICLESBASE_METAL
+        percentage_containerizable: 0.21
+        sctg2: '33'
+      - containerizable: true
+        name: MACHINERY
+        percentage_containerizable: 0.593
+        sctg2: '34'
+      - containerizable: true
+        name: ELECTRONICS
+        percentage_containerizable: 0.56
+        sctg2: '35'
+      - containerizable: true
+        name: MOTORIZED_VEHICLES
+        percentage_containerizable: 0.641
+        sctg2: '36'
+      - containerizable: true
+        name: TRANSPORT_EQUIP
+        percentage_containerizable: 0.031
+        sctg2: '37'
+      - containerizable: true
+        name: PRECISION_INSTRUMENTS
+        percentage_containerizable: 0.021
+        sctg2: '38'
+      - containerizable: true
+        name: FURNITURE
+        percentage_containerizable: 0.05
+        sctg2: '39'
+      - containerizable: true
+        name: MISC_MFG_PRODS
+        percentage_containerizable: 0.108
+        sctg2: '40'
+      - containerizable: false
+        name: WASTE_SCRAP
+        percentage_containerizable: 0.0
+        sctg2: '41'
+      - containerizable: true
+        name: MIXED_FREIGHT
+        percentage_containerizable: 0.988
+        sctg2: '43'
+      faf_demand_field: tons_2022
+  tap_highway_network_dataframe:
+    config:
+      default_capacity_ktons: 100000
+      default_network_alpha: 0.15
+      default_network_beta: 4.0
+      default_speed_mph: 50
+  tap_highway_tons:
+    config:
+      quantile_threshold: 0.999
+  tap_marine_network_dataframe:
+    config:
+      default_capacity_ktons: 60000
+      default_network_alpha: 0.1
+      default_network_beta: 2.0
+      default_speed_mph: 15
+  tap_marine_tons:
+    config:
+      quantile_threshold: 0.6
+  tap_rail_network_dataframe:
+    config:
+      capacity_ktons_default: 100000
+      capacity_ktons_per_track: 1000
+      default_capacity_ktons: 100000
+      default_network_alpha: 0.1
+      default_network_beta: 2.0
+      default_speed_mph: 20
+      dray_default_speed_mph: 50
+      dray_penalty_factor: 100
+      intermodal_edge_alpha: 1
+      intermodal_edge_beta: 1
+      intermodal_facility_capacity_ktons: 7500
+      intermodal_search_radius_miles: 250
+  tap_rail_tons:
+    config:
+      quantile_threshold: 0.9

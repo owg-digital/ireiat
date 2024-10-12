@@ -13,7 +13,7 @@ from ireiat.config.constants import (
     ALBERS_CRS,
     RADIUS_EARTH_MILES,
 )
-from ireiat.config.data_pipeline import DataPipelineConfig
+from ireiat.config.data_pipeline import TAPRailConfig
 from ireiat.config.rail_enum import EdgeType, VertexType
 
 
@@ -98,7 +98,7 @@ def rail_county_association(
     context: dagster.AssetExecutionContext,
     impedance_rail_graph_with_terminals_reduced: ig.Graph,
     county_fips_to_centroid: Dict[Tuple[str, str], Tuple[float, float]],
-    config: DataPipelineConfig,
+    config: TAPRailConfig,
 ) -> Tuple[ig.Graph, Dict[Tuple[str, str], int]]:
     """Add county centroids to rail impedance network with county centroids connected to nearby IM facilities."""
 
@@ -110,7 +110,7 @@ def rail_county_association(
     im_lat_longs_radians = np.deg2rad(np.array(im_lat_longs))
     im_node_ball_tree = BallTree(im_lat_longs_radians, metric="haversine")
 
-    search_radius_radians = config.rail_config.intermodal_search_radius_miles / RADIUS_EARTH_MILES
+    search_radius_radians = config.intermodal_search_radius_miles / RADIUS_EARTH_MILES
     county_lat_longs = list(county_fips_to_centroid.values())
     reverse_county_lookup = {v: k for k, v in county_fips_to_centroid.items()}
     search_coords_radians = np.deg2rad(np.array(county_lat_longs))
@@ -151,7 +151,7 @@ def rail_county_association(
     im_lat_longs_radians = np.deg2rad(np.array(im_node_lat_longs))
     im_node_ball_tree = BallTree(im_lat_longs_radians, metric="haversine")
 
-    search_radius_radians = config.rail_config.intermodal_search_radius_miles / RADIUS_EARTH_MILES
+    search_radius_radians = config.intermodal_search_radius_miles / RADIUS_EARTH_MILES
     county_lat_longs = list(county_centroid_coords_to_vertex_idx.keys())
     search_coords_radians = np.deg2rad(np.array(county_lat_longs))
     imfac_idxs, distances_radians = im_node_ball_tree.query_radius(
@@ -171,8 +171,7 @@ def rail_county_association(
                 edge_attributes["length"].append(distance)
                 edge_attributes["edge_type"].append(EdgeType.COUNTY_TO_IM_LINK.value)
                 edge_attributes["speed"].append(
-                    config.rail_config.dray_default_speed_mph
-                    / config.rail_config.dray_penalty_factor
+                    config.dray_default_speed_mph / config.dray_penalty_factor
                 )
 
     g.add_edges(edges_to_add, attributes=edge_attributes)

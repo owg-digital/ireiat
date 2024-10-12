@@ -7,7 +7,7 @@ from ireiat.config.constants import (
     SUM_TONS_TOLERANCE,
     INTERMEDIATE_DIRECTORY_ARGS,
 )
-from ireiat.config.data_pipeline import DataPipelineConfig
+from ireiat.config.data_pipeline import FAF5MasterConfig, FAF5FilterConfig, FAF5DemandConfig
 from ireiat.config.faf_enum import FAFMode
 from ireiat.data_pipeline.assets.demand.faf5_helpers import (
     faf5_compute_county_tons_for_mode,
@@ -28,13 +28,11 @@ from ireiat.data_pipeline.metadata import publish_metadata
 def faf_filtered_grouped_tons(
     context: dagster.AssetExecutionContext,
     faf5_demand_src: pd.DataFrame,
-    config: DataPipelineConfig,
+    config: FAF5FilterConfig,
 ) -> pd.DataFrame:
     """Filters FAF by containerizable SCTG2 codes and relevant modes, multiplies by containerizable
     demand in each record, and groups by origin/destination/mode."""
-    containerizable_codes = [
-        x.sctg2 for x in config.demand_config.faf_commodities if x.containerizable
-    ]
+    containerizable_codes = [x.sctg2 for x in config.faf_commodities if x.containerizable]
     context.log.info(f"Using {len(containerizable_codes)} containerizable codes")
     is_containerizable = faf5_demand_src["sctg2"].isin(containerizable_codes)
     is_relevant_mode = faf5_demand_src["dms_mode"].isin(
@@ -78,7 +76,7 @@ def _allocate_unknown_modes(
 def faf5_truck_demand(
     context: dagster.AssetExecutionContext,
     faf_filtered_grouped_tons: pd.DataFrame,
-    config: DataPipelineConfig,
+    config: FAF5DemandConfig,
 ) -> pd.DataFrame:
     """Aggregates FAF truck mode and relevant portion of unknown mode into a single dataframe,
     grouped by origin and destination, summing total tons"""
@@ -86,7 +84,7 @@ def faf5_truck_demand(
         context,
         faf_filtered_grouped_tons,
         FAFMode.TRUCK.value,
-        config.demand_config.unknown_mode_percent_truck,
+        config.unknown_mode_percent,
         config.faf_demand_field,
     )
 
@@ -104,7 +102,7 @@ def faf5_truck_demand(
 def faf5_rail_demand(
     context: dagster.AssetExecutionContext,
     faf_filtered_grouped_tons: pd.DataFrame,
-    config: DataPipelineConfig,
+    config: FAF5DemandConfig,
 ) -> pd.DataFrame:
     """Aggregates FAF rail mode and relevant portion of unknown mode into a single dataframe,
     grouped by origin and destination, summing total tons"""
@@ -112,7 +110,7 @@ def faf5_rail_demand(
         context,
         faf_filtered_grouped_tons,
         FAFMode.RAIL.value,
-        config.demand_config.unknown_mode_percent_rail,
+        config.unknown_mode_percent,
         config.faf_demand_field,
     )
 
@@ -130,7 +128,7 @@ def faf5_rail_demand(
 def faf5_water_demand(
     context: dagster.AssetExecutionContext,
     faf_filtered_grouped_tons: pd.DataFrame,
-    config: DataPipelineConfig,
+    config: FAF5DemandConfig,
 ) -> pd.DataFrame:
     """Aggregates FAF marine mode and relevant portion of unknown mode into a single dataframe,
     grouped by origin and destination, summing total tons"""
@@ -138,7 +136,7 @@ def faf5_water_demand(
         context,
         faf_filtered_grouped_tons,
         FAFMode.WATER.value,
-        config.demand_config.unknown_mode_percent_marine,
+        config.unknown_mode_percent,
         config.faf_demand_field,
     )
 
@@ -157,7 +155,7 @@ def county_to_county_highway_tons(
     context: dagster.AssetExecutionContext,
     faf5_truck_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
-    config: DataPipelineConfig,
+    config: FAF5MasterConfig,
 ) -> pd.DataFrame:
     """Calculate (State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons
     for given mode based on county allocation percentages."""
@@ -185,7 +183,7 @@ def county_to_county_rail_tons(
     context: dagster.AssetExecutionContext,
     faf5_rail_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
-    config: DataPipelineConfig,
+    config: FAF5MasterConfig,
 ) -> pd.DataFrame:
     """Calculate (State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons
     for given mode based on county allocation percentages."""
@@ -213,7 +211,7 @@ def county_to_county_marine_tons(
     context: dagster.AssetExecutionContext,
     faf5_water_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
-    config: DataPipelineConfig,
+    config: FAF5MasterConfig,
 ) -> pd.DataFrame:
     """Calculate (State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons
     for given mode based on county allocation percentages."""
