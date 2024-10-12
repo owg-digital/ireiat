@@ -2,7 +2,8 @@ Demand
 ======
 
 We use FAF to source all origin-destination demand for "containerizable"
-freight. The list of excluded commodity codes is detailed in :code:`DemandConfig`.
+freight, all of which are available to be modified in the config file used when running
+the data pipeline.
 
 The FAF dataset is subset by filtering out non-containerizable commodities.
 Once the containerizable demand is isolated, we further divide the data by transportation
@@ -15,10 +16,9 @@ These modes are:
 
 Handling of Other & Unknown Modes
 ---------------------------------
-Rows with Other & Unknown modes are distributed proportionally across the Truck, Rail, and Water
-datasets based on the relative tonnage of known modes (truck, rail, water) for each origin-destination pair.
-This proportional allocation ensures that demand for unknown modes is captured according to the
-transportation patterns of known modes.
+Origin-destination pairs with Other & Unknown modes are distributed across the Truck, Rail, and Water
+according to the values specified in the configuration file.
+
 
 County-to-County Processing
 ---------------------------
@@ -47,9 +47,8 @@ Example Process
 ---------------
 1. The dataset is first split into known modes (truck, rail, water) and unknown modes.
 2. For each origin-destination pair, the total demand for truck, rail, and water is calculated.
-3. Unknown mode demand is then allocated across truck, rail, and water in proportion to their existing tonnage for each origin-destination pair.
-4. The recalculated demand for truck, rail, and water is aggregated to produce the final datasets.
-5. Each mode's dataset is then processed at the county level, generating county-to-county tonnage records.
+3. Unknown mode demand is appended to other demands and re-grouped by OD pair
+4. Each mode's dataset is then processed at the county level, generating county-to-county tonnage records.
 
 Summary
 -------

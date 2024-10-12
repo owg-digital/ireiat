@@ -6,6 +6,15 @@
 Welcome to IREIAT's documentation!
 ==================================
 
+The Intermodal Routing and Environmental Impact Analysis Tool (IREIAT) is meant to enable its target user group,
+infrastructure planners, to understand:
+
+1. Expected flows on the US intermodal freight network given demand, intermodal costs (both direct financial and other
+   costs), and network capacities
+2. How cost, transit time, disruptions/resilience, and GHG emissions affect freight flows across the current and
+   future intermodal network
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -16,7 +25,12 @@ Welcome to IREIAT's documentation!
    network/index
 
 
-The current repo is under active development.
+**Acknowledgement**
+
+The information, data, or work presented herein was funded in part by the Advanced Research Projects Agency-Energy
+(ARPA-E), U.S. Department of Energy, under Award Number DE-AR0001784. The views and opinions of authors expressed
+herein do not necessarily state or reflect those of the United States Government or any agency thereof.
+
 
 Indices and tables
 ==================
