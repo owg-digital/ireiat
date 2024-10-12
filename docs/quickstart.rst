@@ -24,7 +24,13 @@ Create postprocessing artifacts once the solution files exist.
 
 .. code-block::
 
-   ireiat postprocess -m highway
+   ireiat postprocess -m rail
 
 Postprocessing takes the traffic data with the relevant network and plots
 utilization across the network, which can highlight areas of congestion.
+
+..  image:: ../_static/rail_traffic.png
+
+You can alter demand or network parameters in the configuration file to
+understand sensitivities (e.g. capacity reduction, capacity expansion,
+congestion impacts, free flow times, etc.).
