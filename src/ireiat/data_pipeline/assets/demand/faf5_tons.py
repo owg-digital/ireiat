@@ -32,19 +32,37 @@ def faf_filtered_grouped_tons(
 ) -> pd.DataFrame:
     """Filters FAF by containerizable SCTG2 codes and relevant modes, multiplies by containerizable
     demand in each record, and groups by origin/destination/mode."""
+    # limit to "containerizable" tons on relevant modes
     containerizable_codes = [x.sctg2 for x in config.faf_commodities if x.containerizable]
     context.log.info(f"Using {len(containerizable_codes)} containerizable codes")
     is_containerizable = faf5_demand_src["sctg2"].isin(containerizable_codes)
     is_relevant_mode = faf5_demand_src["dms_mode"].isin(
         [FAFMode.TRUCK, FAFMode.RAIL, FAFMode.WATER, FAFMode.MULTIPLE_AND_MAIL]
     )
-    filtered_faf_pdf = faf5_demand_src.loc[is_containerizable & is_relevant_mode]
+    filtered_faf_pdf = faf5_demand_src.loc[is_containerizable & is_relevant_mode].copy()
+
+    # reduce tons to what has been configured as "intermodal"
+    intermodal_percentage_map = {
+        x.sctg2: x.percentage_containerizable for x in config.faf_commodities
+    }
+    context.log.info(intermodal_percentage_map)
+    for not_included_code in set(filtered_faf_pdf["sctg2"].unique()) - set(containerizable_codes):
+        intermodal_percentage_map[not_included_code] = 1
+        context.log.info(
+            f"SCTG2 code {not_included_code} not included, assuming all is intermodal!"
+        )
+    intermodal_tons_percentages = filtered_faf_pdf["sctg2"].map(intermodal_percentage_map)
+    filtered_faf_pdf[config.faf_demand_field] = (
+        filtered_faf_pdf[config.faf_demand_field] * intermodal_tons_percentages
+    )
 
     grouped_faf_pdf = filtered_faf_pdf.groupby(
         ["dms_orig", "dms_dest", "dms_mode"], as_index=False
     )[[config.faf_demand_field]].sum()
-    publish_metadata(context, grouped_faf_pdf)
-    return grouped_faf_pdf
+    non_zero_grouped_faf_pdf = grouped_faf_pdf.loc[grouped_faf_pdf[config.faf_demand_field] > 0]
+
+    publish_metadata(context, non_zero_grouped_faf_pdf)
+    return non_zero_grouped_faf_pdf
 
 
 def _allocate_unknown_modes(
