@@ -80,6 +80,10 @@ class FAF5MasterConfig(Config):
         default=FAF5_DEFAULT_TONS_FIELD,
         description="The field in FAF used to aggregate demand ( in tons)",
     )
+    county_to_county_ktons_threshold: float = Field(
+        default=0.1,
+        description="Annual kton threshold to be included in county->county flows. Anything smaller is excluded.",
+    )
 
 
 class FAF5FilterConfig(FAF5MasterConfig):

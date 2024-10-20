@@ -8,6 +8,7 @@ def faf5_compute_county_tons_for_mode(
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
     FAF_TONS_TARGET_FIELD: str,
     SUM_TONS_TOLERANCE: float,
+    tons_cutoff: float = 0,
 ) -> pd.DataFrame:
     """
     Compute county-to-county tons for a specific mode, distributing based on FAF zone to county allocation percentages.
@@ -17,6 +18,7 @@ def faf5_compute_county_tons_for_mode(
         faf_id_to_county_id_allocation_map (dict): Mapping from FAF zones to county allocation percentages.
         FAF_TONS_TARGET_FIELD (str): The column in the DataFrame that holds the tons of demand.
         SUM_TONS_TOLERANCE (float): Tolerance for checking the sum of tons.
+        tons_cutoff (float): Minimum number of ktons in a county->county transition to be included
 
     Returns:
         pd.DataFrame: DataFrame with non-zero tons, aggregated at the county-to-county level.
@@ -46,6 +48,8 @@ def faf5_compute_county_tons_for_mode(
     )
 
     # Filter out rows with zero tons and sort
-    non_zero_county_od_pdf = county_od_pdf.loc[county_od_pdf["tons"] > 0].sort_values("tons")
+    non_zero_county_od_pdf = county_od_pdf.loc[county_od_pdf["tons"] > tons_cutoff].sort_values(
+        "tons"
+    )
 
     return non_zero_county_od_pdf
