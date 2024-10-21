@@ -5,7 +5,7 @@ import subprocess
 from importlib import resources
 from pathlib import Path
 from typing import Optional
-
+from datetime import datetime
 import click
 
 from ireiat import r_source
@@ -84,9 +84,9 @@ def solve(
         passed_od_file_path=od_file,
         passed_output_file_path=output_file,
     )
-
+    timestamp_formatted = datetime.now().strftime("%Y%m%d%H%M%S")
     # use the bundled 'tap.r' file as a "resource" and create a temporary file to be run by RScript
-    temporary_file_path = CACHE_PATH / "local_tap.r"
+    temporary_file_path = CACHE_PATH / f"local_tap_{timestamp_formatted}.r"
     with open(temporary_file_path, "w") as tf:
         with resources.open_text(r_source, "tap.r") as r_text:
             tf.write(r_text.read())

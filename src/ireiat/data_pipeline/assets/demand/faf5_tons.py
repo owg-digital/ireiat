@@ -182,6 +182,7 @@ def county_to_county_highway_tons(
         faf_id_to_county_id_allocation_map,
         config.faf_demand_field,
         SUM_TONS_TOLERANCE,
+        config.county_to_county_ktons_threshold,
     )
     publish_metadata(context, non_zero_county_od_pdf)
     return non_zero_county_od_pdf
@@ -210,6 +211,7 @@ def county_to_county_rail_tons(
         faf_id_to_county_id_allocation_map,
         config.faf_demand_field,
         SUM_TONS_TOLERANCE,
+        config.county_to_county_ktons_threshold,
     )
     publish_metadata(context, non_zero_county_od_pdf)
     return non_zero_county_od_pdf
@@ -238,6 +240,7 @@ def county_to_county_marine_tons(
         faf_id_to_county_id_allocation_map,
         config.faf_demand_field,
         SUM_TONS_TOLERANCE,
+        config.county_to_county_ktons_threshold,
     )
     publish_metadata(context, non_zero_county_od_pdf)
     return non_zero_county_od_pdf

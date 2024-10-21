@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Any
 
 import dagster
 import geopandas
@@ -160,13 +160,19 @@ def rail_county_association(
     distances_miles = distances_radians * RADIUS_EARTH_MILES
 
     edges_to_add = []
-    edge_attributes = defaultdict(list)
+    edge_attributes: dict[str, list[Any]] = defaultdict(list[Any])
     for idx, (candidate_ims, distances) in enumerate(zip(imfac_idxs, distances_miles)):
         for candidate_im, distance in zip(candidate_ims, distances):
-            im_vertex = im_coords_to_vertex_idx[im_node_lat_longs[candidate_im]]
-            county_vertex = county_centroid_coords_to_vertex_idx[county_lat_longs[idx]]
+            im_coords = im_node_lat_longs[candidate_im]
+            im_vertex = im_coords_to_vertex_idx[im_coords]
+            county_coords = county_lat_longs[idx]
+            county_vertex = county_centroid_coords_to_vertex_idx[county_coords]
             edges_to_add.append((county_vertex, im_vertex))
+            edge_attributes["origin_coords"].append(county_coords)
+            edge_attributes["destination_coords"].append(im_coords)
             edges_to_add.append((im_vertex, county_vertex))
+            edge_attributes["origin_coords"].append(im_coords)
+            edge_attributes["destination_coords"].append(county_coords)
             for _ in range(2):
                 edge_attributes["length"].append(distance)
                 edge_attributes["edge_type"].append(EdgeType.COUNTY_TO_IM_LINK.value)
