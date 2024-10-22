@@ -78,12 +78,15 @@ def get_allowed_node_indices(g: ig.Graph) -> List[int]:
 
 
 def generate_ball_tree(g: igraph.Graph) -> BallTree:
-    """Generates a ball tree from a graph assuming that edges all have an 'origin_coords' attribute"""
+    """Generates a ball tree from a graph assuming that edges all have an 'origin_coords' and
+    'destination_coords' attribute"""
     # stack unique origins / destinations by lat/long
     graph_vertex_index_to_latlong = {}
     for vertex in g.vs:
-        all_edges = [*vertex.in_edges(), *vertex.out_edges()]
-        graph_vertex_index_to_latlong[vertex.index] = all_edges[0]["origin_coords"]
+        if vertex.out_edges():
+            graph_vertex_index_to_latlong[vertex.index] = vertex.out_edges()[0]["origin_coords"]
+            continue
+        graph_vertex_index_to_latlong[vertex.index] = vertex.in_edges()[0]["destination_coords"]
 
     node_lat_long_radians = np.deg2rad(np.array(list(graph_vertex_index_to_latlong.values())))
     return BallTree(node_lat_long_radians, metric="haversine")
