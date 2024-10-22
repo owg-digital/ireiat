@@ -1,4 +1,5 @@
 import dagster
+import igraph
 import igraph as ig
 import numpy as np
 import pandas as pd
@@ -21,12 +22,34 @@ from ireiat.data_pipeline.metadata import publish_metadata
 )
 def tap_highway_network_dataframe(
     context: dagster.AssetExecutionContext,
-    highway_network_dataframe: pd.DataFrame,
+    strongly_connected_highway_graph: igraph.Graph,
     config: TAPNetworkConfig,
 ) -> pd.DataFrame:
     """Entire highway network to represent the TAP, complete with capacity and cost information"""
+    # generate a dataframe from the graph
+    connected_edge_tuples = [
+        (e.source, e.target, e["length"], e["speed"], *e["origin_coords"], *e["destination_coords"])
+        for e in strongly_connected_highway_graph.es
+    ]
+
+    # create and return a dataframe
+    pdf = pd.DataFrame(
+        connected_edge_tuples,
+        columns=[
+            "tail",
+            "head",
+            "length",
+            "speed",
+            "origin_latitude",
+            "origin_longitude",
+            "destination_latitude",
+            "destination_longitude",
+        ],
+    )
+    context.log.info(f"Highway network dataframe created with {len(pdf)} edges.")
+
     # fill out other fields needed for the TAP
-    tap_network = highway_network_dataframe
+    tap_network = pdf
     tap_network["speed"] = tap_network["speed"].fillna(
         tap_network["speed"].mean()
     )  # fill in any null speeds
@@ -117,12 +140,31 @@ def tap_rail_network_dataframe(
 )
 def tap_marine_network_dataframe(
     context: dagster.AssetExecutionContext,
-    marine_network_dataframe: pd.DataFrame,
+    strongly_connected_marine_graph: igraph.Graph,
     config: TAPNetworkConfig,
 ) -> pd.DataFrame:
     """Entire marine network to represent the TAP, complete with capacity and cost information"""
+    connected_edge_tuples = [
+        (e.source, e.target, e["length"], *e["origin_coords"], *e["destination_coords"])
+        for e in strongly_connected_marine_graph.es
+    ]
+
+    # create and return a dataframe
+    pdf = pd.DataFrame(
+        connected_edge_tuples,
+        columns=[
+            "tail",
+            "head",
+            "length",
+            "origin_latitude",
+            "origin_longitude",
+            "destination_latitude",
+            "destination_longitude",
+        ],
+    )
+    context.log.info(f"Marine network dataframe created with {len(pdf)} edges.")
     # fill out other fields needed for the TAP
-    tap_network = marine_network_dataframe
+    tap_network = pdf
 
     if "speed" not in tap_network.columns:
         # If the 'speed' column doesn't exist
