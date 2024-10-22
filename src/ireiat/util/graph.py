@@ -3,6 +3,7 @@ from itertools import chain
 from typing import Dict, Tuple, List
 
 import geopandas
+import igraph
 import igraph as ig
 import numpy as np
 import pandas as pd
@@ -76,23 +77,13 @@ def get_allowed_node_indices(g: ig.Graph) -> List[int]:
     return allowed_node_indices
 
 
-def generate_ball_tree(pdf: pd.DataFrame) -> BallTree:
-    """Generates a ball tree assuming the data has the form tail|head|origin|destination"""
+def generate_ball_tree(g: igraph.Graph) -> BallTree:
+    """Generates a ball tree from a graph assuming that edges all have an 'origin_coords' attribute"""
     # stack unique origins / destinations by lat/long
-    origins = pdf[["tail", "origin_latitude", "origin_longitude"]].drop_duplicates()
-    destinations = pdf[["head", "destination_latitude", "destination_longitude"]].drop_duplicates()
-    origins = origins.rename(
-        {"tail": "node", "origin_latitude": "latitude", "origin_longitude": "longitude"},
-        axis="columns",
-    )
-    destinations = destinations.rename(
-        {"head": "node", "destination_latitude": "latitude", "destination_longitude": "longitude"},
-        axis="columns",
-    )
+    graph_vertex_index_to_latlong = {}
+    for vertex in g.vs:
+        all_edges = [*vertex.in_edges(), *vertex.out_edges()]
+        graph_vertex_index_to_latlong[vertex.index] = all_edges[0]["origin_coords"]
 
-    # order all nodes
-    all_nodes = pd.concat([origins, destinations]).drop_duplicates().sort_values("node")
-    # make sure the node order is continuous
-    assert all_nodes["node"].max() == len(all_nodes) - 1
-    node_lat_long_radians = np.deg2rad(np.array(all_nodes[["latitude", "longitude"]]))
+    node_lat_long_radians = np.deg2rad(np.array(list(graph_vertex_index_to_latlong.values())))
     return BallTree(node_lat_long_radians, metric="haversine")
