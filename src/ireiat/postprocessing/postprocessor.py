@@ -83,10 +83,10 @@ class PostProcessor:
                 logger.info("Assuming running rail postprocessing")
             else:
                 shp_file_gdf["id"] = shp_file_gdf.index
-                logger.info("Assuming running marine postprocessing")
+                logger.info("Assuming running highway postprocessing")
         else:
             shp_file_gdf = shp_file_gdf.rename({"ID": "id"}, axis="columns")
-            logger.info("Assuming running highway postprocessing")
+            logger.info("Assuming running marine postprocessing")
         flows_with_geometry = (
             shp_file_gdf[["id", "geometry"]].set_index("id").join(grouped_traffic, how="left")
         )
