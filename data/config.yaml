@@ -1,27 +1,34 @@
 ops:
   county_to_county_highway_tons:
     config:
+      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
   county_to_county_marine_tons:
     config:
+      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
   county_to_county_rail_tons:
     config:
+      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
   faf5_rail_demand:
     config:
+      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
       unknown_mode_percent: 0.5
   faf5_truck_demand:
     config:
+      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
       unknown_mode_percent: 0.3
   faf5_water_demand:
     config:
+      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
       unknown_mode_percent: 0.2
   faf_filtered_grouped_tons:
     config:
+      county_to_county_ktons_threshold: 0.1
       faf_commodities:
       - containerizable: false
         name: LIVE_ANIMALS_FISH
@@ -200,7 +207,7 @@ ops:
       default_speed_mph: 50
   tap_highway_tons:
     config:
-      quantile_threshold: 0.85
+      quantile_threshold: 0.999
   tap_marine_network_dataframe:
     config:
       default_capacity_ktons: 60000
@@ -213,17 +220,17 @@ ops:
   tap_rail_network_dataframe:
     config:
       capacity_ktons_default: 100000
-      capacity_ktons_per_track: 4400
+      capacity_ktons_per_track: 1000
       default_capacity_ktons: 100000
       default_network_alpha: 0.1
       default_network_beta: 2.0
       default_speed_mph: 20
       dray_default_speed_mph: 50
-      dray_penalty_factor: 1000
+      dray_penalty_factor: 100
       intermodal_edge_alpha: 1
       intermodal_edge_beta: 1
       intermodal_facility_capacity_ktons: 7500
       intermodal_search_radius_miles: 250
   tap_rail_tons:
     config:
-      quantile_threshold: 0.8
+      quantile_threshold: 0.9

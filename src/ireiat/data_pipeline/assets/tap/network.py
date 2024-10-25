@@ -59,7 +59,6 @@ def tap_highway_network_dataframe(
     tap_network["beta"] = config.default_network_beta
     tap_network["alpha"] = config.default_network_alpha
     tap_network["capacity"] = config.default_capacity_ktons
-    tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0
     context.log.info(f"TAP highway network dataframe created with {len(tap_network)} edges.")
@@ -122,8 +121,6 @@ def tap_rail_network_dataframe(
         config.default_network_alpha,
     )
 
-    tap_network = tap_network.sort_values(["tail", "head"])
-
     assert tap_network["speed"].min() > 0
     context.log.info(f"TAP rail network dataframe created with {len(tap_network)} edges.")
     publish_metadata(context, tap_network)
@@ -177,7 +174,6 @@ def tap_marine_network_dataframe(
     tap_network["beta"] = config.default_network_beta
     tap_network["alpha"] = config.default_network_alpha
     tap_network["capacity"] = config.default_capacity_ktons
-    tap_network = tap_network.sort_values(["tail", "head"])
 
     assert tap_network["speed"].min() > 0
     context.log.info(f"TAP marine network dataframe created with {len(tap_network)} edges.")

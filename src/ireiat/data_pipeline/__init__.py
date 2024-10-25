@@ -1,36 +1,40 @@
 import dagster
 
+from ireiat.config.constants import CACHE_PATH, INTERMEDIATE_PATH
 from .assets import demand, highway_network, tap, rail_network, marine_network
 from .io_manager import TabularDataLocalIOManager
-from ireiat.config.constants import CACHE_PATH, INTERMEDIATE_PATH
 
 # demand
 demand_assets = dagster.load_assets_from_package_module(demand, group_name="demand")
-demand_assets_job = dagster.define_asset_job(name="demand_job")
+demand_assets_job = dagster.define_asset_job(name="demand_job", selection=demand_assets)
 
 # highway network
 highway_network_assets = dagster.load_assets_from_package_module(
     highway_network, group_name="highway_network"
 )
-highway_network_assets_job = dagster.define_asset_job(name="highway_network_job")
+highway_network_assets_job = dagster.define_asset_job(
+    name="highway_network_job", selection=highway_network_assets
+)
 
 # rail network
 rail_network_assets = dagster.load_assets_from_package_module(
     rail_network, group_name="rail_network"
 )
 rail_network_assets_job = dagster.define_asset_job(
-    name="rail_network_job",
+    name="rail_network_job", selection=rail_network_assets
 )
 
 # marine network
 marine_network_assets = dagster.load_assets_from_package_module(
     marine_network, group_name="marine_network"
 )
-marine_network_assets_job = dagster.define_asset_job(name="marine_network_job")
+marine_network_assets_job = dagster.define_asset_job(
+    name="marine_network_job", selection=marine_network_assets
+)
 
 # tap assets
 tap_assets = dagster.load_assets_from_package_module(tap, group_name="tap")
-tap_assets_job = dagster.define_asset_job(name="tap_job")
+tap_assets_job = dagster.define_asset_job(name="tap_job", selection=tap_assets)
 
 # all assets
 all_assets = [
@@ -40,7 +44,7 @@ all_assets = [
     *marine_network_assets,
     *tap_assets,
 ]
-all_assets_job = dagster.define_asset_job(name="all")
+all_assets_job = dagster.define_asset_job(name="all", selection=all_assets)
 
 intermediate_path = str(CACHE_PATH / INTERMEDIATE_PATH)
 defs = dagster.Definitions(

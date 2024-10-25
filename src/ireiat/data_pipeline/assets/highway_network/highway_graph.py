@@ -47,6 +47,11 @@ def strongly_connected_highway_graph(
     complete_highway_node_to_idx: Dict[Tuple[float, float], int] = generate_zero_based_node_maps(
         undirected_highway_edges
     )
+    g = ig.Graph(directed=True)
+    g.add_vertices(
+        len(complete_highway_node_to_idx),
+        attributes={"coords": list(complete_highway_node_to_idx.keys())},
+    )
 
     for row in undirected_highway_edges.itertuples():
         origin_coords = (row.origin_latitude, row.origin_longitude)
@@ -101,17 +106,15 @@ def strongly_connected_highway_graph(
     # generate a graph from all nodes
     n_vertices = len(complete_highway_node_to_idx)
     context.log.info(f"Original number of nodes {n_vertices}, edges {len(edge_tuples)}.")
-    g = ig.Graph(
-        n_vertices,
+    g.add_edges(
         edge_tuples,
-        edge_attrs={
+        attributes={
             "length": [attr[0] for attr in edge_attributes],
             "speed": [attr[1] for attr in edge_attributes],
             "original_id": [attr[2] for attr in edge_attributes],
             "origin_coords": [attr[3] for attr in edge_attributes],
             "destination_coords": [attr[4] for attr in edge_attributes],
         },
-        directed=True,
     )
     context.log.info(f"Initial constructed graph connected?: {g.is_connected()}")
     allowed_node_indices = get_allowed_node_indices(g)

@@ -107,6 +107,12 @@ def strongly_connected_rail_graph(
     complete_rail_node_to_idx: Dict[Tuple[float, float], int] = generate_zero_based_node_maps(
         undirected_rail_edges
     )
+    g = ig.Graph(directed=True)
+    g.add_vertices(
+        len(complete_rail_node_to_idx),
+        attributes={"coords": list(complete_rail_node_to_idx.keys())},
+    )
+
     for row in undirected_rail_edges.itertuples():
         origin_coords = (row.origin_latitude, row.origin_longitude)
         destination_coords = (row.destination_latitude, row.destination_longitude)
@@ -132,10 +138,9 @@ def strongly_connected_rail_graph(
     # generate a graph from all nodes
     n_vertices = len(complete_rail_node_to_idx)
     context.log.info(f"Original number of nodes {n_vertices}, edges {len(edge_tuples)}.")
-    g = ig.Graph(
-        n_vertices,
+    g.add_edges(
         edge_tuples,
-        edge_attrs={
+        attributes={
             "length": [attr[0] for attr in edge_attributes],
             "original_id": [attr[1] for attr in edge_attributes],
             "owners": [attr[2] for attr in edge_attributes],
@@ -144,7 +149,6 @@ def strongly_connected_rail_graph(
             "destination_coords": [attr[4] for attr in edge_attributes],
             "tracks": [attr[5] for attr in edge_attributes],
         },
-        directed=True,
     )
     context.log.info(f"Initial constructed graph connected?: {g.is_connected()}")
     allowed_node_indices = get_allowed_node_indices(g)

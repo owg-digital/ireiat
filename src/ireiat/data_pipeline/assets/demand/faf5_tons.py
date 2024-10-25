@@ -59,7 +59,11 @@ def faf_filtered_grouped_tons(
     grouped_faf_pdf = filtered_faf_pdf.groupby(
         ["dms_orig", "dms_dest", "dms_mode"], as_index=False
     )[[config.faf_demand_field]].sum()
-    non_zero_grouped_faf_pdf = grouped_faf_pdf.loc[grouped_faf_pdf[config.faf_demand_field] > 0]
+
+    min_tons_threshold_filter = (
+        grouped_faf_pdf[config.faf_demand_field] > config.county_to_county_ktons_threshold
+    )
+    non_zero_grouped_faf_pdf = grouped_faf_pdf.loc[min_tons_threshold_filter]
 
     publish_metadata(context, non_zero_grouped_faf_pdf)
     return non_zero_grouped_faf_pdf
