@@ -27,8 +27,12 @@ sgr <- makegraph(df = network_df[,c("tail", "head", "fft")],
                  alpha = network_df$alpha,
                  beta = network_df$beta)
 
+# NP 2024/10/26 - only used for fast iteration testing
 # traffic <- get_aon(Graph = sgr, from = od_df$from, to = od_df$to, demand = od_df$tons)
 # head(traffic)
+# print("Successfully solved.")
+# write_parquet(traffic,output_path)
+
 traffic <- assign_traffic(Graph = sgr,
                           from = od_df$from,
                           to = od_df$to,
@@ -40,6 +44,5 @@ traffic <- assign_traffic(Graph = sgr,
                           max_it=max_iterations)
 print("Successfully solved.")
 output_path <- file.path(output_file)
-# write_parquet(traffic,output_path)
 write_parquet(traffic$data,output_path)
 print(sprintf("Written to %s", output_path))

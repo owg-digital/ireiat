@@ -125,10 +125,10 @@ def solve(
     help="The strongly connected (pickled igraph) graph on which the problem has been solved",
 )
 @click.option(
-    "--network-shp",
+    "--network-geo",
     "-n",
     type=click.Path(exists=True),
-    help="The shp file used to represent the underlying network to enable visualization",
+    help="The geo file used to represent the underlying network to enable visualization",
 )
 @click.option(
     "--mode",
@@ -136,13 +136,13 @@ def solve(
     type=MODE_CHOICES,
     help="If specified, uses defaults file outputs for the given mode unless other parameters are passed",
 )
-def postprocess(solution: Path, solution_graph: Path, network_shp: Path, mode: str):
+def postprocess(solution: Path, solution_graph: Path, network_geo: Path, mode: str):
     """Post processes results and save in the default configured cache path"""
     logger.info("Running postprocessing.")
     config = postprocess_config_map.get(mode, PostprocessConfig)(
         passed_traffic_path=solution,
         passed_network_graph_path=solution_graph,
-        passed_shp_file_path=network_shp,
+        passed_geo_file_path=network_geo,
     )
 
     pp = PostProcessor(config.traffic_file_path, config.network_graph_path, config.shp_file_path)

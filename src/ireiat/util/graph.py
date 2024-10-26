@@ -3,13 +3,34 @@ from itertools import chain
 from typing import Dict, Tuple, List
 
 import geopandas
-import igraph
 import igraph as ig
 import numpy as np
 import pandas as pd
+from shapely.geometry import MultiLineString
 from sklearn.neighbors import BallTree
 
-from ireiat.config.constants import LATLONG_CRS
+from ireiat.config.constants import LATLONG_CRS, ALBERS_CRS, METERS_PER_MILE
+
+
+# break out each multiline
+def explode_multilinestrings(gdf: geopandas.GeoDataFrame):
+    """If a dataframe contains shapely.MultiLineString geometries, return a record in the dataframe
+    for each line with the multiline string. Additionally, recompute the `length` field in miles
+    for each row"""
+    multiline_locs, line_locs = [], []
+    for row in gdf.itertuples():
+        if isinstance(row.geometry, MultiLineString):
+            multiline_locs.append(row.Index)
+        else:
+            line_locs.append(row.Index)
+    if not multiline_locs:
+        return gdf
+
+    concatenated_df = pd.concat(
+        [gdf.loc[multiline_locs].explode("geometry"), gdf.loc[line_locs]], axis=0, ignore_index=True
+    )
+    concatenated_df["length"] = concatenated_df.to_crs(ALBERS_CRS).geometry.length / METERS_PER_MILE
+    return concatenated_df
 
 
 def get_coordinates_from_geoframe(gdf: geopandas.GeoDataFrame) -> pd.DataFrame:
@@ -77,7 +98,7 @@ def get_allowed_node_indices(g: ig.Graph) -> List[int]:
     return allowed_node_indices
 
 
-def generate_ball_tree(g: igraph.Graph) -> BallTree:
+def generate_ball_tree(g: ig.Graph) -> BallTree:
     """Generates a ball tree from a graph assuming that vertices all have a 'coords' attribute"""
     # stack unique origins / destinations by lat/long
     vertex_coords = g.vs["coords"]

@@ -80,10 +80,6 @@ class FAF5MasterConfig(Config):
         default=FAF5_DEFAULT_TONS_FIELD,
         description="The field in FAF used to aggregate demand ( in tons)",
     )
-    county_to_county_ktons_threshold: float = Field(
-        default=0.1,
-        description="Annual kton threshold to be included in county->county flows. Anything smaller is excluded.",
-    )
 
 
 class FAF5FilterConfig(FAF5MasterConfig):
@@ -99,6 +95,15 @@ class FAF5DemandConfig(FAF5MasterConfig):
     unknown_mode_percent: float = Field(
         default=0.3,
         description="Percentage of mixed mode FAF demand to allocate to the given modal network",
+    )
+
+
+class FAF5CountyConfig(FAF5MasterConfig):
+    """Excludes county->county flows below a threshold"""
+
+    county_to_county_ktons_threshold: float = Field(
+        default=0.1,
+        description="Annual kton threshold to be included in county->county flows. Anything smaller is excluded.",
     )
 
 
@@ -204,11 +209,13 @@ def default_asset_mapping() -> dict:
         "faf5_truck_demand": {"config": FAF5DemandConfig(**{"unknown_mode_percent": 0.3})},
         "faf5_rail_demand": {"config": FAF5DemandConfig(**{"unknown_mode_percent": 0.5})},
         "faf5_water_demand": {"config": FAF5DemandConfig(**{"unknown_mode_percent": 0.2})},
-        "county_to_county_highway_tons": {"config": FAF5MasterConfig()},
+        "county_to_county_highway_tons": {
+            "config": FAF5CountyConfig(**{"county_to_county_ktons_threshold": 1})
+        },
         "county_to_county_rail_tons": {"config": FAF5MasterConfig()},
         "county_to_county_marine_tons": {"config": FAF5MasterConfig()},
-        "tap_highway_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.999})},
-        "tap_rail_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.9})},
+        "tap_highway_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": None})},
+        "tap_rail_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.8})},
         "tap_marine_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.6})},
         "tap_highway_network_dataframe": {"config": default_tap_highway_config},
         "tap_rail_network_dataframe": {"config": default_tap_rail_config},

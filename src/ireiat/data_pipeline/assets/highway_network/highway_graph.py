@@ -11,6 +11,7 @@ from ireiat.util.graph import (
     get_coordinates_from_geoframe,
     generate_zero_based_node_maps,
     get_allowed_node_indices,
+    explode_multilinestrings,
 )
 
 
@@ -23,14 +24,21 @@ def undirected_highway_edges(
 ) -> pd.DataFrame:
     """For each undirected edge in the highway dataset, create a row in the table with origin_lat, origin_long,
     destination_lat, and destination_long, along with several other edge fields of interest"""
-
-    coords = get_coordinates_from_geoframe(faf5_highway_network_links_src)
+    fields_to_retain = ["dir", "length", "ab_finalsp", "geometry"]
     faf5_highway_network_links_src.columns = [
         c.lower() for c in faf5_highway_network_links_src.columns
     ]
-    coords = pd.concat(
-        [faf5_highway_network_links_src[["id", "dir", "length", "ab_finalsp"]], coords], axis=1
-    )  # join in several fields of interest
+    exploded_faf = explode_multilinestrings(faf5_highway_network_links_src[fields_to_retain])
+    coords = get_coordinates_from_geoframe(exploded_faf)
+    coords = pd.concat([exploded_faf, coords], axis=1)  # join in several fields of interest
+    coords = coords.drop_duplicates(
+        subset=[
+            "origin_latitude",
+            "origin_latitude",
+            "destination_latitude",
+            "destination_longitude",
+        ]
+    ).reset_index(drop=True)
     publish_metadata(context, coords)
     return coords
 
@@ -43,6 +51,7 @@ def strongly_connected_highway_graph(
     # generate directed edges from the undirected edges based on the "dir" field
     edge_tuples = []
     edge_attributes = []
+    added_edges: dict[tuple, bool] = {}  # needed to avoid duplicates
 
     complete_highway_node_to_idx: Dict[Tuple[float, float], int] = generate_zero_based_node_maps(
         undirected_highway_edges
@@ -62,46 +71,39 @@ def strongly_connected_highway_graph(
         )
 
         # record some original edge information needed for visualization and/or TAP setup
-
+        ab_attribute_tuple = (
+            row.length,
+            row.ab_finalsp,
+            row.Index,
+            origin_coords,
+            destination_coords,
+        )
+        ba_attribute_tuple = (
+            row.length,
+            row.ab_finalsp,
+            row.Index,
+            destination_coords,
+            origin_coords,
+        )
         if row.dir == 1:  # A-> B only
-            attribute_tuple = (
-                row.length,
-                row.ab_finalsp,
-                row.id,
-                origin_coords,
-                destination_coords,
-            )
-            edge_tuples.append((tail, head))
-            edge_attributes.append(attribute_tuple)
+            if (tail, head) not in added_edges.keys():
+                edge_tuples.append((tail, head))
+                added_edges[(tail, head)] = True
+                edge_attributes.append(ab_attribute_tuple)
         elif row.dir == -1:  # B->A only
-            attribute_tuple = (
-                row.length,
-                row.ab_finalsp,
-                row.id,
-                destination_coords,
-                origin_coords,
-            )
-            edge_tuples.append((head, tail))  # check these!
-            edge_attributes.append(attribute_tuple)
+            if (head, tail) not in added_edges.keys():
+                edge_tuples.append((head, tail))  # check these!
+                edge_attributes.append(ba_attribute_tuple)
+                added_edges[(head, tail)] = True
         else:
-            attribute_tuple = (
-                row.length,
-                row.ab_finalsp,
-                row.id,
-                origin_coords,
-                destination_coords,
-            )
-            edge_tuples.append((tail, head))
-            edge_attributes.append(attribute_tuple)
-            attribute_tuple = (
-                row.length,
-                row.ab_finalsp,
-                row.id,
-                destination_coords,
-                origin_coords,
-            )
-            edge_tuples.append((head, tail))
-            edge_attributes.append(attribute_tuple)
+            if (tail, head) not in added_edges.keys():
+                edge_tuples.append((tail, head))
+                edge_attributes.append(ab_attribute_tuple)
+                added_edges[(tail, head)] = True
+            if (head, tail) not in added_edges.keys():
+                edge_tuples.append((head, tail))
+                edge_attributes.append(ba_attribute_tuple)
+                added_edges[(head, tail)] = True
 
     # generate a graph from all nodes
     n_vertices = len(complete_highway_node_to_idx)

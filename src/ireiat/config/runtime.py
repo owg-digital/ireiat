@@ -68,11 +68,11 @@ class PostprocessConfig:
 
     default_traffic_path: Path = None
     default_network_graph_path: Path = None
-    default_shp_file_path: Path = None
+    default_geo_file_path: Path = None
 
     passed_traffic_path: Optional[Path] = None
     passed_network_graph_path: Optional[Path] = None
-    passed_shp_file_path: Optional[Path] = None
+    passed_geo_file_path: Optional[Path] = None
 
     @property
     def traffic_file_path(self):
@@ -84,28 +84,28 @@ class PostprocessConfig:
 
     @property
     def shp_file_path(self):
-        return self.passed_shp_file_path or self.default_shp_file_path
+        return self.passed_geo_file_path or self.default_geo_file_path
 
 
 highway_postprocess_config = partial(
     PostprocessConfig,
     default_traffic_path=default_highway_traffic_output_path,
     default_network_graph_path=intermediate_path / "strongly_connected_highway_graph",
-    default_shp_file_path=raw_path / "faf5_highway_links.zip",
+    default_geo_file_path=intermediate_path / "undirected_highway_edges.parquet",
 )
 
 marine_postprocess_config = partial(
     PostprocessConfig,
     default_traffic_path=default_marine_traffic_output_path,
     default_network_graph_path=intermediate_path / "strongly_connected_marine_graph",
-    default_shp_file_path=raw_path / "marine_links.zip",
+    default_geo_file_path=intermediate_path / "undirected_marine_edges.parquet",
 )
 
 rail_postprocess_config = partial(
     PostprocessConfig,
     default_traffic_path=default_rail_traffic_output_path,
     default_network_graph_path=intermediate_path / "rail_graph_with_county_connections",
-    default_shp_file_path=raw_path / "narn_rail_links.zip",
+    default_geo_file_path=intermediate_path / "undirected_rail_edges.parquet",
 )
 
 postprocess_config_map = {

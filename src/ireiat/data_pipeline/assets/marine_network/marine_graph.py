@@ -27,7 +27,11 @@ def undirected_marine_edges(
     link_coords = get_coordinates_from_geoframe(marine_network_links_src)
     marine_network_albers = marine_network_links_src.to_crs(ALBERS_CRS)
     distance_miles = marine_network_albers.geometry.length / METERS_PER_MILE
-    link_coords = pd.concat([link_coords, pd.Series(distance_miles, name="distance_miles")], axis=1)
+    link_coords = pd.concat(
+        [link_coords, pd.Series(distance_miles, name="distance_miles"), marine_network_links_src],
+        axis=1,
+    )
+    link_coords = geopandas.GeoDataFrame(link_coords)
     publish_metadata(context, link_coords)
     return link_coords
 

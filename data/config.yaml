@@ -1,34 +1,28 @@
 ops:
   county_to_county_highway_tons:
     config:
-      county_to_county_ktons_threshold: 0.1
+      county_to_county_ktons_threshold: 1.0
       faf_demand_field: tons_2022
   county_to_county_marine_tons:
     config:
-      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
   county_to_county_rail_tons:
     config:
-      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
   faf5_rail_demand:
     config:
-      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
       unknown_mode_percent: 0.5
   faf5_truck_demand:
     config:
-      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
       unknown_mode_percent: 0.3
   faf5_water_demand:
     config:
-      county_to_county_ktons_threshold: 0.1
       faf_demand_field: tons_2022
       unknown_mode_percent: 0.2
   faf_filtered_grouped_tons:
     config:
-      county_to_county_ktons_threshold: 0.1
       faf_commodities:
       - containerizable: false
         name: LIVE_ANIMALS_FISH
@@ -207,7 +201,7 @@ ops:
       default_speed_mph: 50
   tap_highway_tons:
     config:
-      quantile_threshold: 0.999
+      quantile_threshold: null
   tap_marine_network_dataframe:
     config:
       default_capacity_ktons: 60000
@@ -233,4 +227,4 @@ ops:
       intermodal_search_radius_miles: 250
   tap_rail_tons:
     config:
-      quantile_threshold: 0.9
+      quantile_threshold: 0.8

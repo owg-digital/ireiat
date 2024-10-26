@@ -3,9 +3,9 @@ import os
 import pickle
 from pathlib import Path
 
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import pandas as pd
-import pyogrio
 
 from ireiat.config.constants import CACHE_PATH
 
@@ -17,7 +17,7 @@ class PostProcessor:
 
     _tap_solution_path: Path
     _strongly_connected_graph_path: Path
-    _shp_file_path: Path
+    _geo_file_path: Path
     _solution_output_artifacts: Path = None
     _congestion_png_path: Path = None
 
@@ -37,11 +37,11 @@ class PostProcessor:
         self,
         tap_solution_path: Path,
         strongly_connected_graph_path: Path,
-        shp_file_path: Path,
+        geo_file_path: Path,
     ):
         self._tap_solution_path = Path(tap_solution_path)
         self._strongly_connected_graph_path = strongly_connected_graph_path
-        self._shp_file_path = shp_file_path
+        self._geo_file_path = geo_file_path
 
     def _generate_congestion_png(self):
         logger.info("Reading solution and graph data")
@@ -76,20 +76,9 @@ class PostProcessor:
 
         # read the network
         logger.info("Reading network data")
-        shp_file_gdf = pyogrio.read_dataframe(self._shp_file_path, use_arrow=True)
-        if "id" not in shp_file_gdf.columns:
-            if "FRAARCID" in shp_file_gdf.columns:
-                shp_file_gdf["id"] = shp_file_gdf["FRAARCID"]
-                logger.info("Assuming running rail postprocessing")
-            else:
-                shp_file_gdf["id"] = shp_file_gdf.index
-                logger.info("Assuming running highway postprocessing")
-        else:
-            shp_file_gdf = shp_file_gdf.rename({"ID": "id"}, axis="columns")
-            logger.info("Assuming running marine postprocessing")
-        flows_with_geometry = (
-            shp_file_gdf[["id", "geometry"]].set_index("id").join(grouped_traffic, how="left")
-        )
+        gdf = gpd.read_parquet(self._geo_file_path)
+
+        flows_with_geometry = gdf[["geometry"]].join(grouped_traffic, how="left")
         flows_with_geometry["utilization"] = flows_with_geometry["utilization"].fillna(0)
 
         # all grouped traffic (and associated edges) are found within the FAF data

@@ -84,7 +84,7 @@ def undirected_rail_edges(
     destination_lat, and destination_long, along with several other edge fields of interest"""
 
     link_coords = get_coordinates_from_geoframe(filtered_and_processed_rail_network_links)
-    fields_to_retain = ["FRAARCID", SEPARATION_ATTRIBUTE_NAME, "MILES", "TRACKS"]
+    fields_to_retain = ["FRAARCID", SEPARATION_ATTRIBUTE_NAME, "MILES", "TRACKS", "geometry"]
     link_coords = pd.concat(
         [filtered_and_processed_rail_network_links[fields_to_retain], link_coords], axis=1
     )  # join in the direction
@@ -122,18 +122,28 @@ def strongly_connected_rail_graph(
         )
 
         # record some original edge information needed for visualization and/or TAP setup
-        attribute_tuple = (
+        ab_attribute_tuple = (
             row.MILES,
             row.FRAARCID,
             row.owners,
             origin_coords,
             destination_coords,
             row.TRACKS,
+            row.Index,
+        )
+        ba_attribute_tuple = (
+            row.MILES,
+            row.FRAARCID,
+            row.owners,
+            destination_coords,
+            origin_coords,
+            row.TRACKS,
+            row.Index,
         )
         edge_tuples.append((tail, head))
-        edge_attributes.append(attribute_tuple)
+        edge_attributes.append(ab_attribute_tuple)
         edge_tuples.append((head, tail))
-        edge_attributes.append(attribute_tuple)
+        edge_attributes.append(ba_attribute_tuple)
 
     # generate a graph from all nodes
     n_vertices = len(complete_rail_node_to_idx)
@@ -142,12 +152,13 @@ def strongly_connected_rail_graph(
         edge_tuples,
         attributes={
             "length": [attr[0] for attr in edge_attributes],
-            "original_id": [attr[1] for attr in edge_attributes],
+            "fraarcid": [attr[1] for attr in edge_attributes],
             "owners": [attr[2] for attr in edge_attributes],
             "edge_type": [EdgeType.RAIL_LINK.value for _ in edge_attributes],
             "origin_coords": [attr[3] for attr in edge_attributes],
             "destination_coords": [attr[4] for attr in edge_attributes],
             "tracks": [attr[5] for attr in edge_attributes],
+            "original_id": [attr[6] for attr in edge_attributes],
         },
     )
     context.log.info(f"Initial constructed graph connected?: {g.is_connected()}")

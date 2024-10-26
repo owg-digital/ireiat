@@ -7,7 +7,11 @@ from ireiat.config.constants import (
     SUM_TONS_TOLERANCE,
     INTERMEDIATE_DIRECTORY_ARGS,
 )
-from ireiat.config.data_pipeline import FAF5MasterConfig, FAF5FilterConfig, FAF5DemandConfig
+from ireiat.config.data_pipeline import (
+    FAF5FilterConfig,
+    FAF5DemandConfig,
+    FAF5CountyConfig,
+)
 from ireiat.config.faf_enum import FAFMode
 from ireiat.data_pipeline.assets.demand.faf5_helpers import (
     faf5_compute_county_tons_for_mode,
@@ -60,9 +64,7 @@ def faf_filtered_grouped_tons(
         ["dms_orig", "dms_dest", "dms_mode"], as_index=False
     )[[config.faf_demand_field]].sum()
 
-    min_tons_threshold_filter = (
-        grouped_faf_pdf[config.faf_demand_field] > config.county_to_county_ktons_threshold
-    )
+    min_tons_threshold_filter = grouped_faf_pdf[config.faf_demand_field] > 0
     non_zero_grouped_faf_pdf = grouped_faf_pdf.loc[min_tons_threshold_filter]
 
     publish_metadata(context, non_zero_grouped_faf_pdf)
@@ -177,7 +179,7 @@ def county_to_county_highway_tons(
     context: dagster.AssetExecutionContext,
     faf5_truck_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
-    config: FAF5MasterConfig,
+    config: FAF5CountyConfig,
 ) -> pd.DataFrame:
     """Calculate (State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons
     for given mode based on county allocation percentages."""
@@ -206,7 +208,7 @@ def county_to_county_rail_tons(
     context: dagster.AssetExecutionContext,
     faf5_rail_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
-    config: FAF5MasterConfig,
+    config: FAF5CountyConfig,
 ) -> pd.DataFrame:
     """Calculate (State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons
     for given mode based on county allocation percentages."""
@@ -235,7 +237,7 @@ def county_to_county_marine_tons(
     context: dagster.AssetExecutionContext,
     faf5_water_demand: pd.DataFrame,
     faf_id_to_county_id_allocation_map: Dict[str, Dict[Tuple[str, str], float]],
-    config: FAF5MasterConfig,
+    config: FAF5CountyConfig,
 ) -> pd.DataFrame:
     """Calculate (State FIPS origin, County FIPS origin), (State FIPS destination, County FIPS destination), tons
     for given mode based on county allocation percentages."""
