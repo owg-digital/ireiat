@@ -193,6 +193,18 @@ ops:
         percentage_containerizable: 0.988
         sctg2: '43'
       faf_demand_field: tons_2022
+  impedance_rail_graph:
+    config:
+      class_1_rr_codes:
+      - CSX
+      - BNSF
+      - UP
+      - NS
+      - CN
+      - KCS
+      class_1_to_class_1_impedance: 750
+      default_impedance: 275
+      geographic_overrides: []
   tap_highway_network_dataframe:
     config:
       default_capacity_ktons: 100000
