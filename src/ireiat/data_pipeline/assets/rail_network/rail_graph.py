@@ -174,10 +174,10 @@ def strongly_connected_rail_graph(
 def impedance_rail_graph(
     context: dagster.AssetExecutionContext,
     strongly_connected_rail_graph: ig.Graph,
-    impedance_config: RailImpedanceConfig,
+    config: RailImpedanceConfig,
 ) -> ig.Graph:
     """iGraph object representing the impedance network, derived from the rail network"""
-    g = generate_impedance_graph(strongly_connected_rail_graph, SEPARATION_ATTRIBUTE_NAME)
+    g = generate_impedance_graph(strongly_connected_rail_graph, SEPARATION_ATTRIBUTE_NAME, config)
     context.log.info(f"Graph has {len(g.vs)} nodes and {len(g.es)} edges.")
     assert g.is_connected()
     return g

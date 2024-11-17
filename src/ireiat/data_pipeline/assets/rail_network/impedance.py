@@ -114,7 +114,9 @@ def generate_impedance_values(impedances: set, config: RailImpedanceConfig | Non
 
 
 def generate_impedance_graph(
-    g: ig.Graph, separation_attribute=SEPARATION_ATTRIBUTE_NAME
+    g: ig.Graph,
+    separation_attribute=SEPARATION_ATTRIBUTE_NAME,
+    config: RailImpedanceConfig | None = None,
 ) -> ig.Graph:
     """Given a graph whose edges all contain `separation_attribute`, return an "exploded"
     graph with impedances edges between vertices that have different values of the
@@ -122,6 +124,7 @@ def generate_impedance_graph(
 
     :param g: iGraph with `separation_attribute` of type `Set`
     :param separation_attribute: string identifying the attribute
+    :param config: rail configuration when running the data pipeline
     :return: an exploded graph with impedance edges
 
     """
@@ -149,7 +152,7 @@ def generate_impedance_graph(
     impedance_edge_attrs: Dict[str, Any] = dict()
     impedance_edge_attrs["edge_type"] = [EdgeType.IMPEDANCE_LINK.value for _ in impedance_edges]
     impedance_edge_attrs[separation_attribute] = ["imp" for _ in impedance_edges]
-    impedance_edge_attrs["length"] = generate_impedance_values(impedances)
+    impedance_edge_attrs["length"] = generate_impedance_values(impedances, config)
     disjoint_union.add_edges(impedance_edges, impedance_edge_attrs)
 
     # eliminate zero degree vertices, preserved when creating subgraphs
