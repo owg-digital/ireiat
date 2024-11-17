@@ -107,6 +107,49 @@ class FAF5CountyConfig(FAF5MasterConfig):
     )
 
 
+def _generate_class_1_rr_codes() -> list:
+    return ["CSX", "BNSF", "UP", "NS", "CN", "KCS"]
+
+
+class RailToRailImpedanceOverride(Config):
+    """A class to specify individual rail owner impedances, currently only used within the `GeographicImpedance`
+    class"""
+
+    from_owner: str
+    to_owner: str
+    impedance: int
+
+
+class GeographicImpedance(Config):
+    """An override for impedance values within a geographic area. All impedance junctions with nodes
+    that fall within `radius_miles` of a given lat/long will use this object's class_1_to_class_1_impedance
+    and this configuration's default impedance for anything else. If `overrides` is specified, the specific
+    rail-to-rail impedances will be used"""
+
+    jr260: str
+    latitude: float
+    longitude: float
+    class_1_to_class_1_impedance: int
+    default_impedance: int = Field(
+        default=275, description="Default impedance in this geographic area"
+    )
+    radius_miles: int = 20
+    overrides: list[RailToRailImpedanceOverride] = Field(default_factory=list)
+
+
+class RailImpedanceConfig(Config):
+    """Used to specify impedance parameters on the rail graph in equivalent miles"""
+
+    class_1_rr_codes: list = Field(default_factory=_generate_class_1_rr_codes)
+    default_impedance: int = Field(
+        default=275, description="Default impedance to use when no match is found"
+    )
+    class_1_to_class_1_impedance: int = Field(
+        default=750, description="Default impedance to use when switching between Class 1 RRs"
+    )
+    geographic_overrides: list[GeographicImpedance] = Field(default_factory=list)
+
+
 class TAPFilterTonsConfig(Config):
     """Used to specify an optional quantile threshold to filter county|county tons for the mode"""
 
@@ -214,6 +257,7 @@ def default_asset_mapping() -> dict:
         },
         "county_to_county_rail_tons": {"config": FAF5MasterConfig()},
         "county_to_county_marine_tons": {"config": FAF5MasterConfig()},
+        "impedance_rail_graph": {"config": RailImpedanceConfig()},
         "tap_highway_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": None})},
         "tap_rail_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.8})},
         "tap_marine_tons": {"config": TAPFilterTonsConfig(**{"quantile_threshold": 0.6})},

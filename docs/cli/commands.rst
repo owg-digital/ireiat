@@ -29,7 +29,7 @@ A subset of a yaml configuration file is shown below:
           unknown_mode_percent: 0.3
 
 See the repo under :code:`data/config.yaml` for a full example of all configurable parameters for
-the data pipeline.
+the data pipeline. Or see :ref:`the full documentation of config parameters <configuration>`
 
 Application-specific commands
 =============================

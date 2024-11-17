@@ -10,6 +10,8 @@ import pandas as pd
 from sklearn.neighbors import BallTree
 
 from ireiat.config.constants import INTERMEDIATE_DIRECTORY_ARGS, RR_MAPPING
+from ireiat.config.data_pipeline import RailImpedanceConfig
+from ireiat.data_pipeline.assets.rail_network import SEPARATION_ATTRIBUTE_NAME
 from ireiat.data_pipeline.assets.rail_network.impedance import generate_impedance_graph
 from ireiat.data_pipeline.metadata import publish_metadata
 from ireiat.util.graph import (
@@ -18,8 +20,6 @@ from ireiat.util.graph import (
     get_allowed_node_indices,
 )
 from ireiat.config.rail_enum import EdgeType, VertexType
-
-SEPARATION_ATTRIBUTE_NAME: str = "owners"  # field used to represent owners and trackage rights
 
 
 @dagster.asset(
@@ -174,6 +174,7 @@ def strongly_connected_rail_graph(
 def impedance_rail_graph(
     context: dagster.AssetExecutionContext,
     strongly_connected_rail_graph: ig.Graph,
+    impedance_config: RailImpedanceConfig,
 ) -> ig.Graph:
     """iGraph object representing the impedance network, derived from the rail network"""
     g = generate_impedance_graph(strongly_connected_rail_graph, SEPARATION_ATTRIBUTE_NAME)

@@ -1,12 +1,16 @@
 from itertools import chain, product
-from typing import Tuple, Set, Dict, Any
+from typing import Set, Dict, Any
 
 import igraph as ig
 
+from ireiat.config.data_pipeline import RailImpedanceConfig
 from ireiat.config.rail_enum import EdgeType
+from ireiat.data_pipeline.assets.rail_network import SEPARATION_ATTRIBUTE_NAME
 
 
-def _generate_subgraphs(g: ig.Graph, separation_attribute: str = "owner") -> Dict[str, ig.Graph]:
+def _generate_subgraphs(
+    g: ig.Graph, separation_attribute: str = SEPARATION_ATTRIBUTE_NAME
+) -> Dict[str, ig.Graph]:
     """
     Returns subgraphs by unique entries in the `separation_attribute`  for the graph.
     Returned subgraphs have an 'original_idx' field with the format {X}{Y}, where X is the
@@ -33,8 +37,8 @@ def _generate_subgraphs(g: ig.Graph, separation_attribute: str = "owner") -> Dic
 
 
 def _generate_impedances(
-    g: ig.Graph, separation_attribute="owner"
-) -> Set[Tuple[str, str, str, str]]:
+    g: ig.Graph, separation_attribute=SEPARATION_ATTRIBUTE_NAME
+) -> set[tuple[str, tuple[float, float], str, tuple[float, float]]]:
     """
     Given a graph with a `separation_attribute` on each edge, determine the impedance
     edges that would be needed to join subgraphs that were created from unique values of the
@@ -93,7 +97,24 @@ def _generate_impedances(
     return impedances
 
 
-def generate_impedance_graph(g: ig.Graph, separation_attribute="owner") -> ig.Graph:
+def generate_impedance_values(impedances: set, config: RailImpedanceConfig | None = None):
+    """Looks up impedance values given the configuration passed, which can be geographic or generic"""
+    if config is None:
+        return [250 for _ in impedances]
+
+    computed_impedances = []
+    class_1_rr_codes = set(config.class_1_rr_codes)
+    for src_owner, dest_coords, dest_owner, origin_coords in impedances:
+        if src_owner in class_1_rr_codes and dest_owner in class_1_rr_codes:
+            computed_impedances.append(config.class_1_to_class_1_impedance)
+        else:
+            computed_impedances.append(config.default_impedance)
+    return computed_impedances
+
+
+def generate_impedance_graph(
+    g: ig.Graph, separation_attribute=SEPARATION_ATTRIBUTE_NAME
+) -> ig.Graph:
     """Given a graph whose edges all contain `separation_attribute`, return an "exploded"
     graph with impedances edges between vertices that have different values of the
     separation attribute. See the detailed test cases for how this method is intended to function.
@@ -111,10 +132,12 @@ def generate_impedance_graph(g: ig.Graph, separation_attribute="owner") -> ig.Gr
 
     # cache vertices from/to in the disjoint graph to facilitate fast lookups
     vertices_from = {
-        (e["owners"], e["destination_coords"]): e.target_vertex.index for e in disjoint_union.es
+        (e[separation_attribute], e["destination_coords"]): e.target_vertex.index
+        for e in disjoint_union.es
     }
     vertices_to = {
-        (e["owners"], e["origin_coords"]): e.source_vertex.index for e in disjoint_union.es
+        (e[separation_attribute], e["origin_coords"]): e.source_vertex.index
+        for e in disjoint_union.es
     }
     impedance_edges = [
         (vertices_from[(src_owner, dest_coords)], vertices_to[(dest_owner, origin_coords)])
