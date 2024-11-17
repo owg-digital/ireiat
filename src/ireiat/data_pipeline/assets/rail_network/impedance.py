@@ -105,6 +105,7 @@ def generate_impedance_values(impedances: set, config: RailImpedanceConfig | Non
     computed_impedances = []
     class_1_rr_codes = set(config.class_1_rr_codes)
     for src_owner, dest_coords, dest_owner, origin_coords in impedances:
+        # TODO (NP) - construct ball trees and check if any geographic overrides apply
         if src_owner in class_1_rr_codes and dest_owner in class_1_rr_codes:
             computed_impedances.append(config.class_1_to_class_1_impedance)
         else:
@@ -148,7 +149,7 @@ def generate_impedance_graph(
     impedance_edge_attrs: Dict[str, Any] = dict()
     impedance_edge_attrs["edge_type"] = [EdgeType.IMPEDANCE_LINK.value for _ in impedance_edges]
     impedance_edge_attrs[separation_attribute] = ["imp" for _ in impedance_edges]
-    impedance_edge_attrs["length"] = [250 for _ in impedance_edges]
+    impedance_edge_attrs["length"] = generate_impedance_values(impedances)
     disjoint_union.add_edges(impedance_edges, impedance_edge_attrs)
 
     # eliminate zero degree vertices, preserved when creating subgraphs
