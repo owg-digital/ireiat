@@ -18,6 +18,8 @@ geopandas = "*"
 igraph = "*"
 scikit-learn = "*"
 matplotlib = "*"
+openpyxl = "*"
+pyarrow = "*"
 
 [dev-packages]
 pre-commit = "*"
