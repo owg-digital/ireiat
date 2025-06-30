@@ -2,8 +2,11 @@ from itertools import chain, product
 from typing import Set, Dict, Any
 
 import igraph as ig
+import numpy as np
+from sklearn.neighbors import BallTree
 
-from ireiat.config.data_pipeline import RailImpedanceConfig
+from ireiat.config.constants import RADIUS_EARTH_MILES
+from ireiat.config.data_pipeline import RailImpedanceConfig, GeographicImpedance
 from ireiat.config.rail_enum import EdgeType
 from ireiat.data_pipeline.assets.rail_network import SEPARATION_ATTRIBUTE_NAME
 
@@ -97,20 +100,81 @@ def _generate_impedances(
     return impedances
 
 
+def _get_geographic_owner_impedance_map(
+    override: GeographicImpedance,
+) -> dict[tuple[str, str], int]:
+    override_map = dict()
+    for rail_override in override.overrides:
+        override_map[(rail_override.from_owner, rail_override.to_owner)] = rail_override.impedance
+        override_map[(rail_override.to_owner, rail_override.from_owner)] = rail_override.impedance
+    return override_map
+
+
+def _override_impedances_with_geographic_config(
+    computed_impedances: list,
+    impedances: set,
+    overrides: list[GeographicImpedance],
+    class_1_rr_codes,
+):
+    """Constructs a BallTree from all impedances (using the approximate midpoint of the impedance link
+    origin/destination lat/longs) and, for each geographic override, uses the geographic override's impedance
+    values as applicable"""
+    if len(overrides) == 0:
+        return computed_impedances
+
+    # construct a ball tree for all impedance links from midpoints, as well as lists for later lookup
+    impedance_link_approx_lat_long: list[tuple[float, float]] = []
+    impedance_owners: list[tuple[str, str]] = []
+    for src_owner, dest_coords, dest_owner, origin_coords in impedances:
+        dest_lat, dest_long = dest_coords
+        origin_lat, origin_long = origin_coords
+        approx_lat = (dest_lat + origin_lat) / 2
+        approx_long = (dest_long + origin_long) / 2
+        impedance_link_approx_lat_long.append((approx_lat, approx_long))
+        impedance_owners.append((src_owner, dest_owner))
+    impedance_link_radians = np.deg2rad(np.array(impedance_link_approx_lat_long))
+    bt = BallTree(impedance_link_radians, metric="haversine")
+
+    # cycle through the set of geographic overrides
+    for geographic_impedance in overrides:
+        owner_impedance_map = _get_geographic_owner_impedance_map(geographic_impedance)
+        override_radians = np.deg2rad(
+            [(geographic_impedance.latitude, geographic_impedance.longitude)]
+        )
+        radius_radians = geographic_impedance.radius_miles / RADIUS_EARTH_MILES
+        idxs, distances = bt.query_radius(override_radians, r=radius_radians, return_distance=True)
+
+        # for each impedance link within the search radius, test whether it has a custom override, else use defaults
+        for override_idx in idxs[0]:
+            link_impedance_owners: tuple[str, str] = impedance_owners[override_idx]
+            if link_impedance_owners in owner_impedance_map:
+                computed_impedances[override_idx] = owner_impedance_map[link_impedance_owners]
+            else:
+                if all([o in class_1_rr_codes for o in link_impedance_owners]):
+                    computed_impedances[override_idx] = (
+                        geographic_impedance.class_1_to_class_1_impedance
+                    )
+                else:
+                    computed_impedances[override_idx] = geographic_impedance.default_impedance
+
+    return computed_impedances
+
+
 def generate_impedance_values(impedances: set, config: RailImpedanceConfig | None = None):
     """Looks up impedance values given the configuration passed, which can be geographic or generic"""
     if config is None:
         return [250 for _ in impedances]
 
-    computed_impedances = []
+    impedance_vals = []
     class_1_rr_codes = set(config.class_1_rr_codes)
     for src_owner, dest_coords, dest_owner, origin_coords in impedances:
-        # TODO (NP) - construct ball trees and check if any geographic overrides apply
         if src_owner in class_1_rr_codes and dest_owner in class_1_rr_codes:
-            computed_impedances.append(config.class_1_to_class_1_impedance)
+            impedance_vals.append(config.class_1_to_class_1_impedance)
         else:
-            computed_impedances.append(config.default_impedance)
-    return computed_impedances
+            impedance_vals.append(config.default_impedance)
+    return _override_impedances_with_geographic_config(
+        impedance_vals, impedances, config.geographic_overrides, class_1_rr_codes
+    )
 
 
 def generate_impedance_graph(

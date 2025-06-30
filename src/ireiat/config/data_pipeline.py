@@ -137,6 +137,24 @@ class GeographicImpedance(Config):
     overrides: list[RailToRailImpedanceOverride] = Field(default_factory=list)
 
 
+def _generate_rail_to_rail_impedance():
+    param_dict = dict(from_owner="CSXT", to_owner="CN", impedance=276)
+    return RailToRailImpedanceOverride(**param_dict)
+
+
+def _generate_geographic_impedances():
+    param_dict = dict(
+        jr260="BATON",
+        latitude=30.484715,
+        longitude=-91.18676,
+        class_1_to_class_1_impedance=500,
+        default_impedance=250,
+        radius_miles=20,
+        overrides=[_generate_rail_to_rail_impedance()],
+    )
+    return [GeographicImpedance(**param_dict)]
+
+
 class RailImpedanceConfig(Config):
     """Used to specify impedance parameters on the rail graph in equivalent miles"""
 
@@ -147,7 +165,9 @@ class RailImpedanceConfig(Config):
     class_1_to_class_1_impedance: int = Field(
         default=750, description="Default impedance to use when switching between Class 1 RRs"
     )
-    geographic_overrides: list[GeographicImpedance] = Field(default_factory=list)
+    geographic_overrides: list[GeographicImpedance] = Field(
+        default_factory=_generate_geographic_impedances
+    )
 
 
 class TAPFilterTonsConfig(Config):

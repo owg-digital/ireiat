@@ -204,7 +204,17 @@ ops:
       - KCS
       class_1_to_class_1_impedance: 750
       default_impedance: 275
-      geographic_overrides: []
+      geographic_overrides:
+      - jr260: BATON
+        class_1_to_class_1_impedance: 500
+        default_impedance: 250
+        latitude: 30.484715
+        longitude: -91.18676
+        overrides:
+        - from_owner: CSXT
+          to_owner: CN
+          impedance: 276
+        radius_miles: 20
   tap_highway_network_dataframe:
     config:
       default_capacity_ktons: 100000
